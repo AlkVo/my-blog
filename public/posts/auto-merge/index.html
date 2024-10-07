@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+
+
+<html lang="en" data-theme="">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+    
+        
+<meta charset="utf-8">
+<meta name="HandheldFriendly" content="True">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="referrer" content="no-referrer-when-downgrade">
+
+<title>Automatically Merging Master Branch Code to Other Branches Using GitLab CI - Yiqi&rsquo;s blog</title>
+
+<meta name="description" content="
+  Background
+In our development process, it is required that after the release code is merged into the master branch, the stg and pre branches must also contain the latest master code.
+To ensure this, the company has set up a bot to compare commit differences. If, one day after the release code has been merged into the master branch, the stg and pre branches have not been updated, the team receives a reminder.
+However, team members often forget to manually perform this merge operation, leading to frequent reminders and impacting work efficiency.
+
+  Solution
+To automate this process and avoid human oversight, I wrote a GitLab CI script that, once changes occur in the master branch:
+
+Automatic Merge: Automatically merges the code from the master branch into the stg and pre branches.
+Exception Handling: If conflicts occur during the merge process, causing the merge to fail, the script automatically creates a Merge Request (MR) to prompt developers to handle it promptly.
+">
+
+
+
+
+
+<link rel="icon" type="image/x-icon" href="http://localhost:1313/favicon.ico">
+<link rel="apple-touch-icon-precomposed" href="http://localhost:1313/favicon.png">
+
+
+
+
+
+
+
+
+    
+
+
+
+<style>
+  body {
+    visibility: hidden;
+    opacity: 0;
+  }
+</style>
+
+<noscript>
+  <style>
+    body {
+      visibility: visible;
+      opacity: 1;
+    }
+  </style>
+</noscript>
+
+
+
+
+    
+
+
+
+
+
+    
+    
+    
+
+    
+        <link rel="stylesheet" href="/css/style.03df79c682b91915c7cd261ecd1a6ec4d0fe668c98fa46310d0fbade319b11bd.css" integrity="sha256-A995xoK5GRXHzSYezRpuxND&#43;ZoyY&#43;kYxDQ&#43;63jGbEb0=">
+    
+
+
+
+
+
+    
+
+
+
+
+
+    
+    
+    
+
+    
+        <link rel="stylesheet" href="/css/style.9c1888ebff42c0224ce04dac10cb2c401f1b77f54f78e8d87d73c3bed781c263.css" integrity="sha256-nBiI6/9CwCJM4E2sEMssQB8bd/VPeOjYfXPDvteBwmM=">
+    
+
+
+
+
+
+    
+
+
+
+
+
+    
+    
+    
+
+    
+        <link rel="stylesheet" href="/css/style.acd606c0fce58853afe0248d37bb41acbbcdd8b1aca2412b6c0fa760da0137f3.css" integrity="sha256-rNYGwPzliFOv4CSNN7tBrLvN2LGsokErbA&#43;nYNoBN/M=">
+    
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
+    
+
+
+
+
+
+    
+    
+    
+
+    
+        <script src="/js/script.672e2309c296e07c18bcd08b28d797a56222ff941d65f308fba3158c44885b14.js" type="text/javascript" charset="utf-8" integrity="sha256-Zy4jCcKW4HwYvNCLKNeXpWIi/5QdZfMI&#43;6MVjESIWxQ="></script>
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+</head>
+<body>
+    <a class="skip-main" href="#main">Skip to main content</a>
+    <div class="container">
+        <header class="common-header">
+            
+                <div class="header-top">
+    <div class="header-top-left">
+        <h1 class="site-title noselect">
+    <a href="/">Yiqi&#39;s blog</a>
+</h1>
+
+        
+
+
+
+
+
+
+
+    
+        <div class="theme-switcher">
+            <span class="inline-svg">
+
+    
+
+
+    
+    
+    
+    
+    
+
+    <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-sun-high"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14.828 14.828a4 4 0 1 0 -5.656 -5.656a4 4 0 0 0 5.656 5.656z" /><path d="M6.343 17.657l-1.414 1.414" /><path d="M6.343 6.343l-1.414 -1.414" /><path d="M17.657 6.343l1.414 -1.414" /><path d="M17.657 17.657l1.414 1.414" /><path d="M4 12h-2" /><path d="M12 4v-2" /><path d="M20 12h2" /><path d="M12 20v2" /></svg>
+
+
+</span>
+
+        </div>
+    
+
+    <script>
+        const STORAGE_KEY = 'user-color-scheme'
+        const defaultTheme = "light"
+
+        let currentTheme
+        let switchButton
+        let autoDefinedScheme = window.matchMedia('(prefers-color-scheme: dark)')
+
+        function switchTheme(e) {
+            currentTheme = (currentTheme === 'dark') ? 'light' : 'dark';
+            if (localStorage) localStorage.setItem(STORAGE_KEY, currentTheme);
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            changeGiscusTheme(currentTheme);
+            document.body.dispatchEvent(new CustomEvent(currentTheme + "-theme-set"));
+        }
+
+        const autoChangeScheme = e => {
+            currentTheme = e.matches ? 'dark' : 'light'
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            changeGiscusTheme(currentTheme);
+            document.body.dispatchEvent(new CustomEvent(currentTheme + "-theme-set"));
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            switchButton = document.querySelector('.theme-switcher')
+            currentTheme = detectCurrentScheme()
+
+            if (currentTheme === 'auto') {
+                autoChangeScheme(autoDefinedScheme);
+                autoDefinedScheme.addListener(autoChangeScheme);
+            } else {
+                document.documentElement.setAttribute('data-theme', currentTheme)
+            }
+
+            if (switchButton) {
+                switchButton.addEventListener('click', switchTheme, false)
+            }
+
+            showContent();
+        })
+
+        function detectCurrentScheme() {
+            if (localStorage !== null && localStorage.getItem(STORAGE_KEY)) {
+                return localStorage.getItem(STORAGE_KEY)
+            }
+            if (defaultTheme) {
+                return defaultTheme
+            }
+            return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+
+        function showContent() {
+            document.body.style.visibility = 'visible';
+            document.body.style.opacity = 1;
+        }
+
+        function changeGiscusTheme (theme) {
+            function sendMessage(message) {
+              const iframe = document.querySelector('iframe.giscus-frame');
+              if (!iframe) return;
+              iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+            }
+
+            sendMessage({
+              setConfig: {
+                theme: theme
+              }
+            });
+        }
+    </script>
+
+
+        <ul class="social-icons noselect">
+
+
+
+
+
+
+
+    <li>
+            <a href="/index.xml" title="RSS" rel="me">
+            <span class="inline-svg">
+
+    
+
+
+    
+    
+    
+    
+    
+
+    <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-rss"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 19m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M4 4a16 16 0 0 1 16 16" /><path d="M4 11a9 9 0 0 1 9 9" /></svg>
+
+
+</span>
+
+            </a>
+        </li>
+    
+
+</ul>
+
+    </div>
+    <div class="header-top-right">
+
+    </div>
+</div>
+
+
+    <nav class="noselect">
+        
+        
+        <a class="" href="http://localhost:1313/" title="">Home</a>
+        
+        <a class="" href="http://localhost:1313/about/" title="">About</a>
+        
+        <a class="" href="http://localhost:1313/tags/" title="">Tags</a>
+        
+    </nav>
+
+
+
+
+
+
+
+
+            
+        </header>
+        <main id="main" tabindex="-1">
+            
+    
+
+    <article class="post h-entry">
+        <div class="post-header">
+            <header>
+                <h1 class="p-name post-title">Automatically Merging Master Branch Code to Other Branches Using GitLab CI</h1>
+                
+    
+    <span>
+        <ul class="post-translations">
+            
+                
+                    <li>
+                        EN
+                    </li>
+                
+            
+                
+                    <li>
+                        <a href="/zh/posts/auto-merge/">ZH</a>
+                    </li>
+                
+            
+        </ul>
+    </span>
+
+
+            </header>
+            
+
+
+
+<div class="post-info noselect">
+    
+        <div class="post-date dt-published">
+            <time datetime="2024-05-18">2024-05-18</time>
+            
+        </div>
+    
+
+    <a class="post-hidden-url u-url" href="/posts/auto-merge/">/posts/auto-merge/</a>
+    <a href="http://localhost:1313/" class="p-name p-author post-hidden-author h-card" rel="me">map[email:halfseteamedbun@gmail.com location:Mainland China name:Yiqi]</a>
+
+
+    <div class="post-taxonomies">
+        
+        
+            <ul class="post-tags">
+                
+                    
+                    <li><a href="/tags/gitlab-ci/cd/">#GitLab CI/CD</a></li>
+                
+                    
+                    <li><a href="/tags/development-process-optimization/">#Development Process Optimization</a></li>
+                
+            </ul>
+        
+        
+    </div>
+</div>
+
+        </div>
+        
+
+  
+  
+    
+  
+
+
+
+
+
+
+<script>
+  var toc = document.querySelector(".toc");
+  if (toc) {
+    toc.addEventListener("click", function () {
+      if (event.target.tagName !== "A") {
+        event.preventDefault();
+        if (this.open) {
+          this.open = false;
+          this.classList.remove("expanded");
+        } else {
+          this.open = true;
+          this.classList.add("expanded");
+        }
+      }
+    });
+  }
+</script>
+
+        <div class="content e-content">
+            <h2 id="background">
+  Background
+</h2><p>In our development process, it is required that after the release code is merged into the <code>master</code> branch, the <code>stg</code> and <code>pre</code> branches must also contain the latest <code>master</code> code.</p>
+<p>To ensure this, the company has set up a bot to compare commit differences. If, one day after the release code has been merged into the <code>master</code> branch, the <code>stg</code> and <code>pre</code> branches have not been updated, the team receives a reminder.</p>
+<p>However, team members often forget to manually perform this merge operation, leading to frequent reminders and impacting work efficiency.</p>
+<h2 id="solution">
+  Solution
+</h2><p>To automate this process and avoid human oversight, I wrote a GitLab CI script that, once changes occur in the <code>master</code> branch:</p>
+<ol>
+<li><strong>Automatic Merge</strong>: Automatically merges the code from the <code>master</code> branch into the <code>stg</code> and <code>pre</code> branches.</li>
+<li><strong>Exception Handling</strong>: If conflicts occur during the merge process, causing the merge to fail, the script automatically creates a Merge Request (MR) to prompt developers to handle it promptly.</li>
+</ol>
+<p>Below is a detailed introduction to the implementation of the script.</p>
+<h2 id="implementation-steps">
+  Implementation Steps
+</h2><h3 id="1-add-a-new-stage-merge">
+  1. Add a New Stage <code>merge</code>
+</h3><p>In GitLab CI/CD, <code>stages</code> are used to define different stages in a pipeline. GitLab Runner executes tasks in the order defined in <code>stages</code>.</p>
+<p>First, add a new stage <code>merge</code> in the <code>.gitlab-ci.yml</code> file:</p>
+<div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#ff6ac1">stages</span>:
+</span></span><span style="display:flex;"><span>  - merge
+</span></span></code></pre></div><h3 id="2-add-the-merge-to-stg-job">
+  2. Add the <code>merge-to-stg</code> Job
+</h3><p>Define a job named <code>merge-to-stg</code> to merge the code from the <code>master</code> branch into the <code>stg</code> branch.</p>
+<div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#ff6ac1">merge-to-stg</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">stage</span>: merge
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">allow_failure</span>: <span style="color:#ff6ac1">true</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">only</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#ff6ac1">refs</span>:
+</span></span><span style="display:flex;"><span>      - master
+</span></span></code></pre></div><p><strong>Configuration Explanation:</strong></p>
+<ul>
+<li><code>stage: merge</code>: Specifies that this job belongs to the <code>merge</code> stage, ensuring it executes in the correct stage.</li>
+<li><code>allow_failure: true</code>: Allows the job to fail without affecting the overall pipeline status. Even if conflicts occur during the merge, other jobs can continue to execute and won&rsquo;t be blocked.</li>
+<li><code>only</code>:
+<ul>
+<li><code>refs: - master</code>: Triggers this job only when pushing to the <code>master</code> branch, avoiding unnecessary operations on other branches.</li>
+</ul>
+</li>
+</ul>
+<h3 id="3-write-the-merge-script">
+  3. Write the Merge Script
+</h3><h4 id="31-configure-git-user-information-and-fetch-latest-code">
+  3.1 Configure Git User Information and Fetch Latest Code
+</h4><p>In the <code>script</code> section, first configure the Git user information and fetch the latest code from the remote repository.</p>
+<div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#ff6ac1">script</span>:
+</span></span><span style="display:flex;"><span>  - git config --global user.email &#34;$GITLAB_USER_EMAIL&#34;
+</span></span><span style="display:flex;"><span>  - git config --global user.name &#34;$GITLAB_USER_LOGIN&#34;
+</span></span><span style="display:flex;"><span>  - git fetch origin
+</span></span></code></pre></div><p><strong>Explanation:</strong></p>
+<ul>
+<li><strong>Configure Git User Information</strong>: Use environment variables <code>$GITLAB_USER_EMAIL</code> and <code>$GITLAB_USER_LOGIN</code> to set the Git user&rsquo;s email and username.</li>
+<li><strong>Fetch Remote Code</strong>: <code>git fetch origin</code> fetches the latest commit information from the remote repository.</li>
+</ul>
+<h4 id="32-switch-to-the-target-branch">
+  3.2 Switch to the Target Branch
+</h4><p>Switch to the target branch where you need to merge the code, <code>stg</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#ff6ac1">script</span>:
+</span></span><span style="display:flex;"><span>  - git checkout stg
+</span></span></code></pre></div><h4 id="33-perform-merge-and-record-status">
+  3.3 Perform Merge and Record Status
+</h4><p>Execute the merge operation to merge the code from the <code>master</code> branch into the current branch, push to the remote repository, and then record the merge status.</p>
+<div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#ff6ac1">script</span>:
+</span></span><span style="display:flex;"><span>  - git merge origin/$CI_COMMIT_REF_NAME
+</span></span><span style="display:flex;"><span>  - git push https://oauth2:$PROJECT_ACCESS_TOKEN@$CI_SERVER_HOST/$CI_PROJECT_PATH.git
+</span></span><span style="display:flex;"><span>  - echo &#34;SUCCESS&#34; &gt; .job_status
+</span></span></code></pre></div><p><strong>Explanation:</strong></p>
+<ul>
+<li><strong>Merge Code</strong>: <code>git merge origin/$CI_COMMIT_REF_NAME</code> merges the code from the <code>origin/master</code> branch into the current branch.</li>
+<li><strong>Push Code</strong>: Uses the project access token to push the merged code to the remote repository (ensure the <code>$PROJECT_ACCESS_TOKEN</code> environment variable is set in the project).</li>
+<li><strong>Record Status</strong>: <code>echo &quot;SUCCESS&quot; &gt; .job_status</code> records the successful merge status into the <code>.job_status</code> file.</li>
+</ul>
+<h4 id="34-check-merge-status-after-job-completion">
+  3.4 Check Merge Status After Job Completion
+</h4><p>Use <code>after_script</code> to define commands that need to be executed after the job finishes, check whether the merge was successful, and take appropriate actions in case of failure.</p>
+<div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#ff6ac1">after_script</span>:
+</span></span><span style="display:flex;"><span>  - job_status=$(cat .job_status 2&gt;/dev/null || echo &#34;FAILED&#34;)
+</span></span><span style="display:flex;"><span>  - current_branch=$(git rev-parse --abbrev-ref HEAD)
+</span></span><span style="display:flex;"><span>  - |<span style="color:#5af78e">
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">    if [ &#34;$job_status&#34; == &#39;SUCCESS&#39; ]; then
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">      echo &#34;Merge to $current_branch succeeded.&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">    else
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">      echo &#34;Merge to $current_branch failed.&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">      curl --request POST --header &#34;PRIVATE-TOKEN:$PROJECT_ACCESS_TOKEN&#34; \
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">      --data &#34;source_branch=$CI_COMMIT_REF_NAME&amp;target_branch=$current_branch&amp;title=Auto merge $CI_COMMIT_REF_NAME to $current_branch&#34; \
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">      &#34;https://$CI_SERVER_HOST/api/v4/projects/$CI_PROJECT_ID/merge_requests&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">    fi</span>    
+</span></span></code></pre></div><p><strong>Explanation:</strong></p>
+<ul>
+<li><strong>Check Merge Status</strong>: Reads the <code>.job_status</code> file; if it does not exist, it is considered a merge failure.</li>
+<li><strong>Perform Actions Based on Status</strong>:
+<ul>
+<li><strong>Success</strong>: Outputs a success message.</li>
+<li><strong>Failure</strong>: Outputs a failure message and uses the GitLab API to create an MR, prompting relevant personnel to handle it.</li>
+</ul>
+</li>
+</ul>
+<h3 id="4-extract-common-script-fragments-to-reduce-duplication">
+  4. Extract Common Script Fragments to Reduce Duplication
+</h3><p>Since the same operations need to be performed on multiple branches, to improve the maintainability of the configuration file, we use YAML anchors (<code>&amp;</code>) and aliases (<code>*</code>) to extract common script fragments.</p>
+<h4 id="41-define-common-script-fragments">
+  4.1 Define Common Script Fragments
+</h4><div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#ff6ac1">.fetch_script</span>: <span style="color:#78787e">&amp;fetch_script</span>
+</span></span><span style="display:flex;"><span>  - git config --global user.email &#34;$GITLAB_USER_EMAIL&#34;
+</span></span><span style="display:flex;"><span>  - git config --global user.name &#34;$GITLAB_USER_LOGIN&#34;
+</span></span><span style="display:flex;"><span>  - git fetch origin
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">.merge_script</span>: <span style="color:#78787e">&amp;merge_script</span>
+</span></span><span style="display:flex;"><span>  - git merge origin/$CI_COMMIT_REF_NAME
+</span></span><span style="display:flex;"><span>  - git push https://oauth2:$PROJECT_ACCESS_TOKEN@$CI_SERVER_HOST/$CI_PROJECT_PATH.git
+</span></span><span style="display:flex;"><span>  - echo &#34;SUCCESS&#34; &gt; .job_status
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">.check_status_script</span>: <span style="color:#78787e">&amp;check_status_script</span>
+</span></span><span style="display:flex;"><span>  - job_status=$(cat .job_status 2&gt;/dev/null || echo &#34;FAILED&#34;)
+</span></span><span style="display:flex;"><span>  - current_branch=$(git rev-parse --abbrev-ref HEAD)
+</span></span><span style="display:flex;"><span>  - |<span style="color:#5af78e">
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">    if [ &#34;$job_status&#34; == &#39;SUCCESS&#39; ]; then
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">      echo &#34;Merge to $current_branch succeeded.&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">    else
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">      echo &#34;Merge to $current_branch failed.&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">      curl --request POST --header &#34;PRIVATE-TOKEN:$PROJECT_ACCESS_TOKEN&#34; \
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">      --data &#34;source_branch=$CI_COMMIT_REF_NAME&amp;target_branch=$current_branch&amp;title=Auto merge $CI_COMMIT_REF_NAME to $current_branch&#34; \
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">      &#34;https://$CI_SERVER_HOST/api/v4/projects/$CI_PROJECT_ID/merge_requests&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">    fi</span>    
+</span></span></code></pre></div><h4 id="42-reference-common-scripts-in-jobs">
+  4.2 Reference Common Scripts in Jobs
+</h4><p>In the previously defined <code>merge-to-stg</code> job, modify it to reference the predefined script fragments using <code>*script_name</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#ff6ac1">merge-to-stg</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">stage</span>: merge
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">allow_failure</span>: <span style="color:#ff6ac1">true</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">script</span>:
+</span></span><span style="display:flex;"><span>    - <span style="color:#78787e">*fetch_script</span>
+</span></span><span style="display:flex;"><span>    - git checkout stg
+</span></span><span style="display:flex;"><span>    - <span style="color:#78787e">*merge_script</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">after_script</span>:
+</span></span><span style="display:flex;"><span>    - <span style="color:#78787e">*check_status_script</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">only</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#ff6ac1">refs</span>:
+</span></span><span style="display:flex;"><span>      - master
+</span></span></code></pre></div><p>Similarly, you can write the <code>merge-to-pre</code> job to merge code into the <code>pre</code> branch, avoiding duplicate code.</p>
+<h3 id="5-complete-gitlab-ciyml-file">
+  5. Complete <code>.gitlab-ci.yml</code> File
+</h3><div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#ff6ac1">image</span>: your-docker-image
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">stages</span>:
+</span></span><span style="display:flex;"><span>  - merge
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">.fetch_script</span>: <span style="color:#78787e">&amp;fetch_script</span>
+</span></span><span style="display:flex;"><span>  - git config --global user.email &#34;$GITLAB_USER_EMAIL&#34;
+</span></span><span style="display:flex;"><span>  - git config --global user.name &#34;$GITLAB_USER_LOGIN&#34;
+</span></span><span style="display:flex;"><span>  - git fetch origin
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">.merge_script</span>: <span style="color:#78787e">&amp;merge_script</span>
+</span></span><span style="display:flex;"><span>  - git merge origin/$CI_COMMIT_REF_NAME
+</span></span><span style="display:flex;"><span>  - git push https://oauth2:$PROJECT_ACCESS_TOKEN@$CI_SERVER_HOST/$CI_PROJECT_PATH.git
+</span></span><span style="display:flex;"><span>  - echo &#34;SUCCESS&#34; &gt; .job_status
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">.check_status_script</span>: <span style="color:#78787e">&amp;check_status_script</span>
+</span></span><span style="display:flex;"><span>  - job_status=$(cat .job_status 2&gt;/dev/null || echo &#34;FAILED&#34;)
+</span></span><span style="display:flex;"><span>  - current_branch=$(git rev-parse --abbrev-ref HEAD)
+</span></span><span style="display:flex;"><span>  - |<span style="color:#5af78e">
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">    if [ &#34;$job_status&#34; == &#39;SUCCESS&#39; ]; then
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">      echo &#34;Merge to $current_branch succeeded.&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">    else
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">      echo &#34;Merge to $current_branch failed.&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">      curl --request POST --header &#34;PRIVATE-TOKEN:$PROJECT_ACCESS_TOKEN&#34; \
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">      --data &#34;source_branch=$CI_COMMIT_REF_NAME&amp;target_branch=$current_branch&amp;title=Auto merge $CI_COMMIT_REF_NAME to $current_branch&#34; \
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">      &#34;https://$CI_SERVER_HOST/api/v4/projects/$CI_PROJECT_ID/merge_requests&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">    fi</span>    
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">merge-to-stg</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">stage</span>: merge
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">allow_failure</span>: <span style="color:#ff6ac1">true</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">script</span>:
+</span></span><span style="display:flex;"><span>    - <span style="color:#78787e">*fetch_script</span>
+</span></span><span style="display:flex;"><span>    - git checkout stg
+</span></span><span style="display:flex;"><span>    - <span style="color:#78787e">*merge_script</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">after_script</span>:
+</span></span><span style="display:flex;"><span>    - <span style="color:#78787e">*check_status_script</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">only</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#ff6ac1">refs</span>:
+</span></span><span style="display:flex;"><span>      - master
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">merge-to-pre</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">stage</span>: merge
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">allow_failure</span>: <span style="color:#ff6ac1">true</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">script</span>:
+</span></span><span style="display:flex;"><span>    - <span style="color:#78787e">*fetch_script</span>
+</span></span><span style="display:flex;"><span>    - git checkout pre
+</span></span><span style="display:flex;"><span>    - <span style="color:#78787e">*merge_script</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">after_script</span>:
+</span></span><span style="display:flex;"><span>    - <span style="color:#78787e">*check_status_script</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">only</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#ff6ac1">refs</span>:
+</span></span><span style="display:flex;"><span>      - master
+</span></span></code></pre></div><h2 id="summary">
+  Summary
+</h2><p>Through the above configuration, we have implemented the functionality of automatically merging the code from the <code>master</code> branch into the <code>stg</code> and <code>pre</code> branches after code has any changes in <code>master</code>. Even if conflicts occur during the merge process, the script automatically creates an MR to prompt developers to handle it promptly. This automation effectively solves the problem of team members forgetting to manually merge, ensures consistency of code across different environments, and improves work efficiency.</p>
+        </div>
+
+    </article>
+
+    
+    
+
+    
+        
+        
+    
+
+    
+
+    
+        
+
+
+
+
+
+
+
+
+
+    
+
+    
+
+    
+
+        </main>
+        
+            <footer class="common-footer noselect">
+    
+    
+        <ul class="language-select">
+    
+    
+    
+
+    
+        
+            <li>English</li>
+        
+    
+        
+            <li><a href="/zh/posts/auto-merge/">中文</a></li>
+        
+    
+</ul>
+
+    
+
+    <div class="common-footer-bottom">
+        
+
+        <div style="display: flex; align-items: center; gap:8px">
+            ©  Yiqi,  2024
+            
+        </div>
+        <div style="display:flex;align-items: center">
+            
+            
+            
+            
+            
+            
+        </div>
+        <div>
+            Powered by <a target="_blank" rel="noopener noreferrer" href="https://gohugo.io/">Hugo</a>, theme <a target="_blank" rel="noopener noreferrer" href="https://github.com/Junyi-99/hugo-theme-anubis2">Anubis2</a>.<br>
+            
+
+        </div>
+    </div>
+
+    <p class="h-card vcard">
+
+    <a href=http://localhost:1313/ class="p-name u-url url fn" rel="me">map[email:halfseteamedbun@gmail.com location:Mainland China name:Yiqi]</a>
+
+    
+
+    
+</p>
+
+</footer>
+
+        
+    </div>
+</body>
+</html>

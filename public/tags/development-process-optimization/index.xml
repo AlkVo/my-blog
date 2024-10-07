@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Development Process Optimization on Yiqi&#39;s blog</title>
+    <link>/tags/development-process-optimization/</link>
+    <description>Yiqi&#39;s blog (Development Process Optimization)</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    
+      
+        <managingEditor>halfseteamedbun@gmail.com
+          
+            (Yiqi)
+          
+        </managingEditor>
+      
+
+      
+    
+
+    
+    <lastBuildDate>Sat, 18 May 2024 00:00:00 +0000</lastBuildDate>
+    
+    <atom:link href="/tags/development-process-optimization/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Automatically Merging Master Branch Code to Other Branches Using GitLab CI</title>
+      <link>/posts/auto-merge/</link>
+      <pubDate>Sat, 18 May 2024 00:00:00 +0000</pubDate>
+      <author>halfseteamedbun@gmail.com (Yiqi)</author>
+      <guid>/posts/auto-merge/</guid>
+      <description>&lt;h2 id=&#34;background&#34;&gt;
+  Background
+&lt;/h2&gt;&lt;p&gt;In our development process, it is required that after the release code is merged into the &lt;code&gt;master&lt;/code&gt; branch, the &lt;code&gt;stg&lt;/code&gt; and &lt;code&gt;pre&lt;/code&gt; branches must also contain the latest &lt;code&gt;master&lt;/code&gt; code.&lt;/p&gt;
+&lt;p&gt;To ensure this, the company has set up a bot to compare commit differences. If, one day after the release code has been merged into the &lt;code&gt;master&lt;/code&gt; branch, the &lt;code&gt;stg&lt;/code&gt; and &lt;code&gt;pre&lt;/code&gt; branches have not been updated, the team receives a reminder.&lt;/p&gt;
+&lt;p&gt;However, team members often forget to manually perform this merge operation, leading to frequent reminders and impacting work efficiency.&lt;/p&gt;
+&lt;h2 id=&#34;solution&#34;&gt;
+  Solution
+&lt;/h2&gt;&lt;p&gt;To automate this process and avoid human oversight, I wrote a GitLab CI script that, once changes occur in the &lt;code&gt;master&lt;/code&gt; branch:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;Automatic Merge&lt;/strong&gt;: Automatically merges the code from the &lt;code&gt;master&lt;/code&gt; branch into the &lt;code&gt;stg&lt;/code&gt; and &lt;code&gt;pre&lt;/code&gt; branches.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Exception Handling&lt;/strong&gt;: If conflicts occur during the merge process, causing the merge to fail, the script automatically creates a Merge Request (MR) to prompt developers to handle it promptly.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;Below is a detailed introduction to the implementation of the script.&lt;/p&gt;
+&lt;h2 id=&#34;implementation-steps&#34;&gt;
+  Implementation Steps
+&lt;/h2&gt;&lt;h3 id=&#34;1-add-a-new-stage-merge&#34;&gt;
+  1. Add a New Stage &lt;code&gt;merge&lt;/code&gt;
+&lt;/h3&gt;&lt;p&gt;In GitLab CI/CD, &lt;code&gt;stages&lt;/code&gt; are used to define different stages in a pipeline. GitLab Runner executes tasks in the order defined in &lt;code&gt;stages&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;First, add a new stage &lt;code&gt;merge&lt;/code&gt; in the &lt;code&gt;.gitlab-ci.yml&lt;/code&gt; file:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-yaml&#34; data-lang=&#34;yaml&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff6ac1&#34;&gt;stages&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - merge
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h3 id=&#34;2-add-the-merge-to-stg-job&#34;&gt;
+  2. Add the &lt;code&gt;merge-to-stg&lt;/code&gt; Job
+&lt;/h3&gt;&lt;p&gt;Define a job named &lt;code&gt;merge-to-stg&lt;/code&gt; to merge the code from the &lt;code&gt;master&lt;/code&gt; branch into the &lt;code&gt;stg&lt;/code&gt; branch.&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-yaml&#34; data-lang=&#34;yaml&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff6ac1&#34;&gt;merge-to-stg&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff6ac1&#34;&gt;stage&lt;/span&gt;: merge
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff6ac1&#34;&gt;allow_failure&lt;/span&gt;: &lt;span style=&#34;color:#ff6ac1&#34;&gt;true&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff6ac1&#34;&gt;only&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff6ac1&#34;&gt;refs&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      - master
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;strong&gt;Configuration Explanation:&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;stage: merge&lt;/code&gt;: Specifies that this job belongs to the &lt;code&gt;merge&lt;/code&gt; stage, ensuring it executes in the correct stage.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;allow_failure: true&lt;/code&gt;: Allows the job to fail without affecting the overall pipeline status. Even if conflicts occur during the merge, other jobs can continue to execute and won&amp;rsquo;t be blocked.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;only&lt;/code&gt;:
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;refs: - master&lt;/code&gt;: Triggers this job only when pushing to the &lt;code&gt;master&lt;/code&gt; branch, avoiding unnecessary operations on other branches.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;3-write-the-merge-script&#34;&gt;
+  3. Write the Merge Script
+&lt;/h3&gt;&lt;h4 id=&#34;31-configure-git-user-information-and-fetch-latest-code&#34;&gt;
+  3.1 Configure Git User Information and Fetch Latest Code
+&lt;/h4&gt;&lt;p&gt;In the &lt;code&gt;script&lt;/code&gt; section, first configure the Git user information and fetch the latest code from the remote repository.&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-yaml&#34; data-lang=&#34;yaml&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff6ac1&#34;&gt;script&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - git config --global user.email &amp;#34;$GITLAB_USER_EMAIL&amp;#34;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - git config --global user.name &amp;#34;$GITLAB_USER_LOGIN&amp;#34;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - git fetch origin
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;strong&gt;Explanation:&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Configure Git User Information&lt;/strong&gt;: Use environment variables &lt;code&gt;$GITLAB_USER_EMAIL&lt;/code&gt; and &lt;code&gt;$GITLAB_USER_LOGIN&lt;/code&gt; to set the Git user&amp;rsquo;s email and username.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Fetch Remote Code&lt;/strong&gt;: &lt;code&gt;git fetch origin&lt;/code&gt; fetches the latest commit information from the remote repository.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;32-switch-to-the-target-branch&#34;&gt;
+  3.2 Switch to the Target Branch
+&lt;/h4&gt;&lt;p&gt;Switch to the target branch where you need to merge the code, &lt;code&gt;stg&lt;/code&gt;:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-yaml&#34; data-lang=&#34;yaml&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff6ac1&#34;&gt;script&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - git checkout stg
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;33-perform-merge-and-record-status&#34;&gt;
+  3.3 Perform Merge and Record Status
+&lt;/h4&gt;&lt;p&gt;Execute the merge operation to merge the code from the &lt;code&gt;master&lt;/code&gt; branch into the current branch, push to the remote repository, and then record the merge status.&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-yaml&#34; data-lang=&#34;yaml&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff6ac1&#34;&gt;script&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - git merge origin/$CI_COMMIT_REF_NAME
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - git push https://oauth2:$PROJECT_ACCESS_TOKEN@$CI_SERVER_HOST/$CI_PROJECT_PATH.git
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - echo &amp;#34;SUCCESS&amp;#34; &amp;gt; .job_status
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;strong&gt;Explanation:&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Merge Code&lt;/strong&gt;: &lt;code&gt;git merge origin/$CI_COMMIT_REF_NAME&lt;/code&gt; merges the code from the &lt;code&gt;origin/master&lt;/code&gt; branch into the current branch.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Push Code&lt;/strong&gt;: Uses the project access token to push the merged code to the remote repository (ensure the &lt;code&gt;$PROJECT_ACCESS_TOKEN&lt;/code&gt; environment variable is set in the project).&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Record Status&lt;/strong&gt;: &lt;code&gt;echo &amp;quot;SUCCESS&amp;quot; &amp;gt; .job_status&lt;/code&gt; records the successful merge status into the &lt;code&gt;.job_status&lt;/code&gt; file.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;34-check-merge-status-after-job-completion&#34;&gt;
+  3.4 Check Merge Status After Job Completion
+&lt;/h4&gt;&lt;p&gt;Use &lt;code&gt;after_script&lt;/code&gt; to define commands that need to be executed after the job finishes, check whether the merge was successful, and take appropriate actions in case of failure.&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-yaml&#34; data-lang=&#34;yaml&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff6ac1&#34;&gt;after_script&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - job_status=$(cat .job_status 2&amp;gt;/dev/null || echo &amp;#34;FAILED&amp;#34;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - current_branch=$(git rev-parse --abbrev-ref HEAD)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - |&lt;span style=&#34;color:#5af78e&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;    if [ &amp;#34;$job_status&amp;#34; == &amp;#39;SUCCESS&amp;#39; ]; then
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;      echo &amp;#34;Merge to $current_branch succeeded.&amp;#34;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;    else
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;      echo &amp;#34;Merge to $current_branch failed.&amp;#34;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;      curl --request POST --header &amp;#34;PRIVATE-TOKEN:$PROJECT_ACCESS_TOKEN&amp;#34; \
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;      --data &amp;#34;source_branch=$CI_COMMIT_REF_NAME&amp;amp;target_branch=$current_branch&amp;amp;title=Auto merge $CI_COMMIT_REF_NAME to $current_branch&amp;#34; \
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;      &amp;#34;https://$CI_SERVER_HOST/api/v4/projects/$CI_PROJECT_ID/merge_requests&amp;#34;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;    fi&lt;/span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;strong&gt;Explanation:&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Check Merge Status&lt;/strong&gt;: Reads the &lt;code&gt;.job_status&lt;/code&gt; file; if it does not exist, it is considered a merge failure.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Perform Actions Based on Status&lt;/strong&gt;:
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Success&lt;/strong&gt;: Outputs a success message.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Failure&lt;/strong&gt;: Outputs a failure message and uses the GitLab API to create an MR, prompting relevant personnel to handle it.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;4-extract-common-script-fragments-to-reduce-duplication&#34;&gt;
+  4. Extract Common Script Fragments to Reduce Duplication
+&lt;/h3&gt;&lt;p&gt;Since the same operations need to be performed on multiple branches, to improve the maintainability of the configuration file, we use YAML anchors (&lt;code&gt;&amp;amp;&lt;/code&gt;) and aliases (&lt;code&gt;*&lt;/code&gt;) to extract common script fragments.&lt;/p&gt;
+&lt;h4 id=&#34;41-define-common-script-fragments&#34;&gt;
+  4.1 Define Common Script Fragments
+&lt;/h4&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-yaml&#34; data-lang=&#34;yaml&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff6ac1&#34;&gt;.fetch_script&lt;/span&gt;: &lt;span style=&#34;color:#78787e&#34;&gt;&amp;amp;fetch_script&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - git config --global user.email &amp;#34;$GITLAB_USER_EMAIL&amp;#34;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - git config --global user.name &amp;#34;$GITLAB_USER_LOGIN&amp;#34;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - git fetch origin
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff6ac1&#34;&gt;.merge_script&lt;/span&gt;: &lt;span style=&#34;color:#78787e&#34;&gt;&amp;amp;merge_script&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - git merge origin/$CI_COMMIT_REF_NAME
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - git push https://oauth2:$PROJECT_ACCESS_TOKEN@$CI_SERVER_HOST/$CI_PROJECT_PATH.git
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - echo &amp;#34;SUCCESS&amp;#34; &amp;gt; .job_status
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff6ac1&#34;&gt;.check_status_script&lt;/span&gt;: &lt;span style=&#34;color:#78787e&#34;&gt;&amp;amp;check_status_script&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - job_status=$(cat .job_status 2&amp;gt;/dev/null || echo &amp;#34;FAILED&amp;#34;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - current_branch=$(git rev-parse --abbrev-ref HEAD)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - |&lt;span style=&#34;color:#5af78e&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;    if [ &amp;#34;$job_status&amp;#34; == &amp;#39;SUCCESS&amp;#39; ]; then
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;      echo &amp;#34;Merge to $current_branch succeeded.&amp;#34;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;    else
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;      echo &amp;#34;Merge to $current_branch failed.&amp;#34;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;      curl --request POST --header &amp;#34;PRIVATE-TOKEN:$PROJECT_ACCESS_TOKEN&amp;#34; \
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;      --data &amp;#34;source_branch=$CI_COMMIT_REF_NAME&amp;amp;target_branch=$current_branch&amp;amp;title=Auto merge $CI_COMMIT_REF_NAME to $current_branch&amp;#34; \
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;      &amp;#34;https://$CI_SERVER_HOST/api/v4/projects/$CI_PROJECT_ID/merge_requests&amp;#34;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;    fi&lt;/span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;42-reference-common-scripts-in-jobs&#34;&gt;
+  4.2 Reference Common Scripts in Jobs
+&lt;/h4&gt;&lt;p&gt;In the previously defined &lt;code&gt;merge-to-stg&lt;/code&gt; job, modify it to reference the predefined script fragments using &lt;code&gt;*script_name&lt;/code&gt;:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-yaml&#34; data-lang=&#34;yaml&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff6ac1&#34;&gt;merge-to-stg&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff6ac1&#34;&gt;stage&lt;/span&gt;: merge
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff6ac1&#34;&gt;allow_failure&lt;/span&gt;: &lt;span style=&#34;color:#ff6ac1&#34;&gt;true&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff6ac1&#34;&gt;script&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    - &lt;span style=&#34;color:#78787e&#34;&gt;*fetch_script&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    - git checkout stg
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    - &lt;span style=&#34;color:#78787e&#34;&gt;*merge_script&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff6ac1&#34;&gt;after_script&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    - &lt;span style=&#34;color:#78787e&#34;&gt;*check_status_script&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff6ac1&#34;&gt;only&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff6ac1&#34;&gt;refs&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      - master
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;Similarly, you can write the &lt;code&gt;merge-to-pre&lt;/code&gt; job to merge code into the &lt;code&gt;pre&lt;/code&gt; branch, avoiding duplicate code.&lt;/p&gt;
+&lt;h3 id=&#34;5-complete-gitlab-ciyml-file&#34;&gt;
+  5. Complete &lt;code&gt;.gitlab-ci.yml&lt;/code&gt; File
+&lt;/h3&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-yaml&#34; data-lang=&#34;yaml&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff6ac1&#34;&gt;image&lt;/span&gt;: your-docker-image
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff6ac1&#34;&gt;stages&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - merge
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff6ac1&#34;&gt;.fetch_script&lt;/span&gt;: &lt;span style=&#34;color:#78787e&#34;&gt;&amp;amp;fetch_script&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - git config --global user.email &amp;#34;$GITLAB_USER_EMAIL&amp;#34;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - git config --global user.name &amp;#34;$GITLAB_USER_LOGIN&amp;#34;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - git fetch origin
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff6ac1&#34;&gt;.merge_script&lt;/span&gt;: &lt;span style=&#34;color:#78787e&#34;&gt;&amp;amp;merge_script&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - git merge origin/$CI_COMMIT_REF_NAME
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - git push https://oauth2:$PROJECT_ACCESS_TOKEN@$CI_SERVER_HOST/$CI_PROJECT_PATH.git
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - echo &amp;#34;SUCCESS&amp;#34; &amp;gt; .job_status
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff6ac1&#34;&gt;.check_status_script&lt;/span&gt;: &lt;span style=&#34;color:#78787e&#34;&gt;&amp;amp;check_status_script&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - job_status=$(cat .job_status 2&amp;gt;/dev/null || echo &amp;#34;FAILED&amp;#34;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - current_branch=$(git rev-parse --abbrev-ref HEAD)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - |&lt;span style=&#34;color:#5af78e&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;    if [ &amp;#34;$job_status&amp;#34; == &amp;#39;SUCCESS&amp;#39; ]; then
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;      echo &amp;#34;Merge to $current_branch succeeded.&amp;#34;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;    else
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;      echo &amp;#34;Merge to $current_branch failed.&amp;#34;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;      curl --request POST --header &amp;#34;PRIVATE-TOKEN:$PROJECT_ACCESS_TOKEN&amp;#34; \
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;      --data &amp;#34;source_branch=$CI_COMMIT_REF_NAME&amp;amp;target_branch=$current_branch&amp;amp;title=Auto merge $CI_COMMIT_REF_NAME to $current_branch&amp;#34; \
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;      &amp;#34;https://$CI_SERVER_HOST/api/v4/projects/$CI_PROJECT_ID/merge_requests&amp;#34;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;    fi&lt;/span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff6ac1&#34;&gt;merge-to-stg&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff6ac1&#34;&gt;stage&lt;/span&gt;: merge
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff6ac1&#34;&gt;allow_failure&lt;/span&gt;: &lt;span style=&#34;color:#ff6ac1&#34;&gt;true&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff6ac1&#34;&gt;script&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    - &lt;span style=&#34;color:#78787e&#34;&gt;*fetch_script&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    - git checkout stg
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    - &lt;span style=&#34;color:#78787e&#34;&gt;*merge_script&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff6ac1&#34;&gt;after_script&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    - &lt;span style=&#34;color:#78787e&#34;&gt;*check_status_script&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff6ac1&#34;&gt;only&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff6ac1&#34;&gt;refs&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      - master
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff6ac1&#34;&gt;merge-to-pre&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff6ac1&#34;&gt;stage&lt;/span&gt;: merge
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff6ac1&#34;&gt;allow_failure&lt;/span&gt;: &lt;span style=&#34;color:#ff6ac1&#34;&gt;true&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff6ac1&#34;&gt;script&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    - &lt;span style=&#34;color:#78787e&#34;&gt;*fetch_script&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    - git checkout pre
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    - &lt;span style=&#34;color:#78787e&#34;&gt;*merge_script&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff6ac1&#34;&gt;after_script&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    - &lt;span style=&#34;color:#78787e&#34;&gt;*check_status_script&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff6ac1&#34;&gt;only&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff6ac1&#34;&gt;refs&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      - master
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id=&#34;summary&#34;&gt;
+  Summary
+&lt;/h2&gt;&lt;p&gt;Through the above configuration, we have implemented the functionality of automatically merging the code from the &lt;code&gt;master&lt;/code&gt; branch into the &lt;code&gt;stg&lt;/code&gt; and &lt;code&gt;pre&lt;/code&gt; branches after code has any changes in &lt;code&gt;master&lt;/code&gt;. Even if conflicts occur during the merge process, the script automatically creates an MR to prompt developers to handle it promptly. This automation effectively solves the problem of team members forgetting to manually merge, ensures consistency of code across different environments, and improves work efficiency.&lt;/p&gt;</description>
+    </item>
+    
+  </channel>
+</rss>

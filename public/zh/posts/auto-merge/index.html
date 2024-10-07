@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+
+
+<html lang="zh" data-theme="">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+    
+        
+<meta charset="utf-8">
+<meta name="HandheldFriendly" content="True">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="referrer" content="no-referrer-when-downgrade">
+
+<title>使用 GitLab CI 自动合并 master 分支代码到其他分支 - Yiqi&rsquo;s blog</title>
+
+<meta name="description" content="
+  背景
+在我们的开发流程中，要求在发布代码合并到 master 分支后，stg 和 pre 分支也必须包含最新的 master 代码。
+为此，公司设置了一个机器人（bot）来比较 commit 差异。如果在发布代码合并到 master 分支一天后，stg 和 pre 分支仍未更新，团队收到提醒。
+然而，团队成员经常忘记手动执行这个合并操作，导致频繁的提醒，影响了工作效率。
+
+  解决方案
+为了自动化这一流程，避免人为疏忽，我编写了一个 GitLab CI 脚本，一旦 master 分支的代码发生变动：
+
+自动合并：将 master 分支的代码自动合并到 stg 和 pre 分支。
+异常处理：如果合并过程中出现冲突，导致合并失败，脚本会自动创建一个 Merge Request（MR），提醒开发者及时处理。
+">
+
+
+
+
+
+<link rel="icon" type="image/x-icon" href="http://localhost:1313/favicon.ico">
+<link rel="apple-touch-icon-precomposed" href="http://localhost:1313/favicon.png">
+
+
+
+
+
+
+
+
+    
+
+
+
+<style>
+  body {
+    visibility: hidden;
+    opacity: 0;
+  }
+</style>
+
+<noscript>
+  <style>
+    body {
+      visibility: visible;
+      opacity: 1;
+    }
+  </style>
+</noscript>
+
+
+
+
+    
+
+
+
+
+
+    
+    
+    
+
+    
+        <link rel="stylesheet" href="/css/style.03df79c682b91915c7cd261ecd1a6ec4d0fe668c98fa46310d0fbade319b11bd.css" integrity="sha256-A995xoK5GRXHzSYezRpuxND&#43;ZoyY&#43;kYxDQ&#43;63jGbEb0=">
+    
+
+
+
+
+
+    
+
+
+
+
+
+    
+    
+    
+
+    
+        <link rel="stylesheet" href="/css/style.9c1888ebff42c0224ce04dac10cb2c401f1b77f54f78e8d87d73c3bed781c263.css" integrity="sha256-nBiI6/9CwCJM4E2sEMssQB8bd/VPeOjYfXPDvteBwmM=">
+    
+
+
+
+
+
+    
+
+
+
+
+
+    
+    
+    
+
+    
+        <link rel="stylesheet" href="/css/style.acd606c0fce58853afe0248d37bb41acbbcdd8b1aca2412b6c0fa760da0137f3.css" integrity="sha256-rNYGwPzliFOv4CSNN7tBrLvN2LGsokErbA&#43;nYNoBN/M=">
+    
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
+    
+
+
+
+
+
+    
+    
+    
+
+    
+        <script src="/js/script.672e2309c296e07c18bcd08b28d797a56222ff941d65f308fba3158c44885b14.js" type="text/javascript" charset="utf-8" integrity="sha256-Zy4jCcKW4HwYvNCLKNeXpWIi/5QdZfMI&#43;6MVjESIWxQ="></script>
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+</head>
+<body>
+    <a class="skip-main" href="#main">Skip to main content</a>
+    <div class="container">
+        <header class="common-header">
+            
+                <div class="header-top">
+    <div class="header-top-left">
+        <h1 class="site-title noselect">
+    <a href="/zh">Yiqi&#39;s blog</a>
+</h1>
+
+        
+
+
+
+
+
+
+
+    
+        <div class="theme-switcher">
+            <span class="inline-svg">
+
+    
+
+
+    
+    
+    
+    
+    
+
+    <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-sun-high"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14.828 14.828a4 4 0 1 0 -5.656 -5.656a4 4 0 0 0 5.656 5.656z" /><path d="M6.343 17.657l-1.414 1.414" /><path d="M6.343 6.343l-1.414 -1.414" /><path d="M17.657 6.343l1.414 -1.414" /><path d="M17.657 17.657l1.414 1.414" /><path d="M4 12h-2" /><path d="M12 4v-2" /><path d="M20 12h2" /><path d="M12 20v2" /></svg>
+
+
+</span>
+
+        </div>
+    
+
+    <script>
+        const STORAGE_KEY = 'user-color-scheme'
+        const defaultTheme = "light"
+
+        let currentTheme
+        let switchButton
+        let autoDefinedScheme = window.matchMedia('(prefers-color-scheme: dark)')
+
+        function switchTheme(e) {
+            currentTheme = (currentTheme === 'dark') ? 'light' : 'dark';
+            if (localStorage) localStorage.setItem(STORAGE_KEY, currentTheme);
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            changeGiscusTheme(currentTheme);
+            document.body.dispatchEvent(new CustomEvent(currentTheme + "-theme-set"));
+        }
+
+        const autoChangeScheme = e => {
+            currentTheme = e.matches ? 'dark' : 'light'
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            changeGiscusTheme(currentTheme);
+            document.body.dispatchEvent(new CustomEvent(currentTheme + "-theme-set"));
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            switchButton = document.querySelector('.theme-switcher')
+            currentTheme = detectCurrentScheme()
+
+            if (currentTheme === 'auto') {
+                autoChangeScheme(autoDefinedScheme);
+                autoDefinedScheme.addListener(autoChangeScheme);
+            } else {
+                document.documentElement.setAttribute('data-theme', currentTheme)
+            }
+
+            if (switchButton) {
+                switchButton.addEventListener('click', switchTheme, false)
+            }
+
+            showContent();
+        })
+
+        function detectCurrentScheme() {
+            if (localStorage !== null && localStorage.getItem(STORAGE_KEY)) {
+                return localStorage.getItem(STORAGE_KEY)
+            }
+            if (defaultTheme) {
+                return defaultTheme
+            }
+            return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+
+        function showContent() {
+            document.body.style.visibility = 'visible';
+            document.body.style.opacity = 1;
+        }
+
+        function changeGiscusTheme (theme) {
+            function sendMessage(message) {
+              const iframe = document.querySelector('iframe.giscus-frame');
+              if (!iframe) return;
+              iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+            }
+
+            sendMessage({
+              setConfig: {
+                theme: theme
+              }
+            });
+        }
+    </script>
+
+
+        <ul class="social-icons noselect">
+
+
+
+
+
+
+
+    <li>
+            <a href="/zh/index.xml" title="RSS" rel="me">
+            <span class="inline-svg">
+
+    
+
+
+    
+    
+    
+    
+    
+
+    <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-rss"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 19m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M4 4a16 16 0 0 1 16 16" /><path d="M4 11a9 9 0 0 1 9 9" /></svg>
+
+
+</span>
+
+            </a>
+        </li>
+    
+
+</ul>
+
+    </div>
+    <div class="header-top-right">
+
+    </div>
+</div>
+
+
+    <nav class="noselect">
+        
+        
+        <a class="" href="http://localhost:1313/zh/" title="">Home</a>
+        
+        <a class="" href="http://localhost:1313/zh/about/" title="">About</a>
+        
+        <a class="" href="http://localhost:1313/zh/tags/" title="">Tags</a>
+        
+    </nav>
+
+
+
+
+
+
+
+
+            
+        </header>
+        <main id="main" tabindex="-1">
+            
+    
+
+    <article class="post h-entry">
+        <div class="post-header">
+            <header>
+                <h1 class="p-name post-title">使用 GitLab CI 自动合并 master 分支代码到其他分支</h1>
+                
+    
+    <span>
+        <ul class="post-translations">
+            
+                
+                    <li>
+                        <a href="/posts/auto-merge/">EN</a>
+                    </li>
+                
+            
+                
+                    <li>
+                        ZH
+                    </li>
+                
+            
+        </ul>
+    </span>
+
+
+            </header>
+            
+
+
+
+<div class="post-info noselect">
+    
+        <div class="post-date dt-published">
+            <time datetime="2024-05-18">2024-05-18</time>
+            
+        </div>
+    
+
+    <a class="post-hidden-url u-url" href="/zh/posts/auto-merge/">/zh/posts/auto-merge/</a>
+    <a href="http://localhost:1313/" class="p-name p-author post-hidden-author h-card" rel="me">map[email:halfseteamedbun@gmail.com location:Mainland China name:Yiqi]</a>
+
+
+    <div class="post-taxonomies">
+        
+        
+            <ul class="post-tags">
+                
+                    
+                    <li><a href="/zh/tags/gitlab-ci/cd/">#GitLab CI/CD</a></li>
+                
+                    
+                    <li><a href="/zh/tags/development-process-optimization/">#Development Process Optimization</a></li>
+                
+            </ul>
+        
+        
+    </div>
+</div>
+
+        </div>
+        
+
+  
+  
+    
+  
+
+
+
+
+
+
+<script>
+  var toc = document.querySelector(".toc");
+  if (toc) {
+    toc.addEventListener("click", function () {
+      if (event.target.tagName !== "A") {
+        event.preventDefault();
+        if (this.open) {
+          this.open = false;
+          this.classList.remove("expanded");
+        } else {
+          this.open = true;
+          this.classList.add("expanded");
+        }
+      }
+    });
+  }
+</script>
+
+        <div class="content e-content">
+            <h2 id="背景">
+  背景
+</h2><p>在我们的开发流程中，要求在发布代码合并到 <code>master</code> 分支后，<code>stg</code> 和 <code>pre</code> 分支也必须包含最新的 <code>master</code> 代码。</p>
+<p>为此，公司设置了一个机器人（bot）来比较 commit 差异。如果在发布代码合并到 <code>master</code> 分支一天后，<code>stg</code> 和 <code>pre</code> 分支仍未更新，团队收到提醒。</p>
+<p>然而，团队成员经常忘记手动执行这个合并操作，导致频繁的提醒，影响了工作效率。</p>
+<h2 id="解决方案">
+  解决方案
+</h2><p>为了自动化这一流程，避免人为疏忽，我编写了一个 GitLab CI 脚本，一旦 <code>master</code> 分支的代码发生变动：</p>
+<ol>
+<li><strong>自动合并</strong>：将 <code>master</code> 分支的代码自动合并到 <code>stg</code> 和 <code>pre</code> 分支。</li>
+<li><strong>异常处理</strong>：如果合并过程中出现冲突，导致合并失败，脚本会自动创建一个 Merge Request（MR），提醒开发者及时处理。</li>
+</ol>
+<p>下面详细介绍该脚本的实现过程。</p>
+<h2 id="实现步骤">
+  实现步骤
+</h2><h3 id="1-添加新的阶段-merge">
+  1. 添加新的阶段 <code>merge</code>
+</h3><p>在 GitLab CI/CD 中，<code>stages</code> 用于定义流水线中的各个阶段。GitLab Runner 会按照 <code>stages</code> 中定义的顺序依次执行任务。</p>
+<p>首先，在 <code>.gitlab-ci.yml</code> 文件中添加一个新的阶段 <code>merge</code>：</p>
+<div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#ff6ac1">stages</span>:
+</span></span><span style="display:flex;"><span>  - merge
+</span></span></code></pre></div><h3 id="2-添加-merge-to-stg-任务">
+  2. 添加 <code>merge-to-stg</code> 任务
+</h3><p>定义一个名为 <code>merge-to-stg</code> 的任务，用于将 <code>master</code> 分支的代码合并到 <code>stg</code> 分支。</p>
+<div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#ff6ac1">merge-to-stg</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">stage</span>: merge
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">allow_failure</span>: <span style="color:#ff6ac1">true</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">only</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#ff6ac1">refs</span>:
+</span></span><span style="display:flex;"><span>      - master
+</span></span></code></pre></div><p><strong>配置说明：</strong></p>
+<ul>
+<li><code>stage: merge</code>：指定该任务属于 <code>merge</code> 阶段，确保其在正确的阶段执行。</li>
+<li><code>allow_failure: true</code>：允许任务失败而不影响整个流水线的状态。即使合并过程中出现冲突，其他任务仍可继续执行，不会被阻塞。</li>
+<li><code>only</code>：
+<ul>
+<li><code>refs: - master</code>：仅在推送到 <code>master</code> 分支时触发该任务，避免在其他分支上执行不必要的操作。</li>
+</ul>
+</li>
+</ul>
+<h3 id="3-编写合并脚本">
+  3. 编写合并脚本
+</h3><h4 id="31-配置-git-用户信息并获取最新代码">
+  3.1 配置 Git 用户信息并获取最新代码
+</h4><p>在 <code>script</code> 中，首先配置 Git 用户信息，并获取远程仓库的最新代码。</p>
+<div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#ff6ac1">script</span>:
+</span></span><span style="display:flex;"><span>  - git config --global user.email &#34;$GITLAB_USER_EMAIL&#34;
+</span></span><span style="display:flex;"><span>  - git config --global user.name &#34;$GITLAB_USER_LOGIN&#34;
+</span></span><span style="display:flex;"><span>  - git fetch origin
+</span></span></code></pre></div><p><strong>说明：</strong></p>
+<ul>
+<li><strong>配置 Git 用户信息</strong>：使用环境变量 <code>$GITLAB_USER_EMAIL</code> 和 <code>$GITLAB_USER_LOGIN</code> 设置 Git 用户的邮箱和用户名。</li>
+<li><strong>获取远程代码</strong>：<code>git fetch origin</code> 获取远程仓库的最新提交信息。</li>
+</ul>
+<h4 id="32-切换到目标分支">
+  3.2 切换到目标分支
+</h4><p>切换到需要合并代码的目标分支 <code>stg</code>：</p>
+<div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#ff6ac1">script</span>:
+</span></span><span style="display:flex;"><span>  - git checkout stg
+</span></span></code></pre></div><h4 id="33-执行合并并记录状态">
+  3.3 执行合并并记录状态
+</h4><p>执行合并操作，将 <code>master</code> 分支的代码合并到当前分支，并推送到远程仓库。然后记录合并状态。</p>
+<div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#ff6ac1">script</span>:
+</span></span><span style="display:flex;"><span>  - git merge origin/$CI_COMMIT_REF_NAME
+</span></span><span style="display:flex;"><span>  - git push https://oauth2:$PROJECT_ACCESS_TOKEN@$CI_SERVER_HOST/$CI_PROJECT_PATH.git
+</span></span><span style="display:flex;"><span>  - echo &#34;SUCCESS&#34; &gt; .job_status
+</span></span></code></pre></div><p><strong>说明：</strong></p>
+<ul>
+<li><strong>合并代码</strong>：<code>git merge origin/$CI_COMMIT_REF_NAME</code> 将 <code>origin/master</code> 分支的代码合并到当前分支。</li>
+<li><strong>推送代码</strong>：使用项目访问令牌将合并后的代码推送到远程仓库（请确保在项目中设置了 <code>$PROJECT_ACCESS_TOKEN</code> 环境变量）。</li>
+<li><strong>记录状态</strong>：<code>echo &quot;SUCCESS&quot; &gt; .job_status</code> 将合并成功的状态记录到 <code>.job_status</code> 文件中。</li>
+</ul>
+<h4 id="34-在任务完成后检查合并状态">
+  3.4 在任务完成后检查合并状态
+</h4><p>使用 <code>after_script</code> 定义在任务执行结束后需要执行的命令，检查合并是否成功，并在失败时采取相应措施。</p>
+<div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#ff6ac1">after_script</span>:
+</span></span><span style="display:flex;"><span>  - job_status=$(cat .job_status 2&gt;/dev/null || echo &#34;FAILED&#34;)
+</span></span><span style="display:flex;"><span>  - current_branch=$(git rev-parse --abbrev-ref HEAD)
+</span></span><span style="display:flex;"><span>  - |<span style="color:#5af78e">
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">    if [ &#34;$job_status&#34; == &#39;SUCCESS&#39; ]; then
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">      echo &#34;Merge to $current_branch succeeded.&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">    else
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">      echo &#34;Merge to $current_branch failed.&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">      curl --request POST --header &#34;PRIVATE-TOKEN:$PROJECT_ACCESS_TOKEN&#34; \
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">      --data &#34;source_branch=$CI_COMMIT_REF_NAME&amp;target_branch=$current_branch&amp;title=Auto merge $CI_COMMIT_REF_NAME to $current_branch&#34; \
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">      &#34;https://$CI_SERVER_HOST/api/v4/projects/$CI_PROJECT_ID/merge_requests&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">    fi</span>    
+</span></span></code></pre></div><p><strong>说明：</strong></p>
+<ul>
+<li><strong>检查合并状态</strong>：读取 <code>.job_status</code> 文件，如果不存在则视为合并失败。</li>
+<li><strong>根据状态执行操作</strong>：
+<ul>
+<li><strong>成功</strong>：输出成功信息。</li>
+<li><strong>失败</strong>：输出失败信息，并通过 GitLab API 创建一个 MR，提醒相关人员处理。</li>
+</ul>
+</li>
+</ul>
+<h3 id="4-提取公共脚本片段以减少重复">
+  4. 提取公共脚本片段以减少重复
+</h3><p>由于需要对多个分支执行相同的操作，为了提高配置文件的可维护性，我们使用 YAML 的锚点（<code>&amp;</code>）和别名（<code>*</code>）来提取公共的脚本片段。</p>
+<h4 id="41-定义公共脚本片段">
+  4.1 定义公共脚本片段
+</h4><div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#ff6ac1">.fetch_script</span>: <span style="color:#78787e">&amp;fetch_script</span>
+</span></span><span style="display:flex;"><span>  - git config --global user.email &#34;$GITLAB_USER_EMAIL&#34;
+</span></span><span style="display:flex;"><span>  - git config --global user.name &#34;$GITLAB_USER_LOGIN&#34;
+</span></span><span style="display:flex;"><span>  - git fetch origin
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">.merge_script</span>: <span style="color:#78787e">&amp;merge_script</span>
+</span></span><span style="display:flex;"><span>  - git merge origin/$CI_COMMIT_REF_NAME
+</span></span><span style="display:flex;"><span>  - git push https://oauth2:$PROJECT_ACCESS_TOKEN@$CI_SERVER_HOST/$CI_PROJECT_PATH.git
+</span></span><span style="display:flex;"><span>  - echo &#34;SUCCESS&#34; &gt; .job_status
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">.check_status_script</span>: <span style="color:#78787e">&amp;check_status_script</span>
+</span></span><span style="display:flex;"><span>  - job_status=$(cat .job_status 2&gt;/dev/null || echo &#34;FAILED&#34;)
+</span></span><span style="display:flex;"><span>  - current_branch=$(git rev-parse --abbrev-ref HEAD)
+</span></span><span style="display:flex;"><span>  - |<span style="color:#5af78e">
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">    if [ &#34;$job_status&#34; == &#39;SUCCESS&#39; ]; then
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">      echo &#34;Merge to $current_branch succeeded.&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">    else
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">      echo &#34;Merge to $current_branch failed.&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">      curl --request POST --header &#34;PRIVATE-TOKEN:$PROJECT_ACCESS_TOKEN&#34; \
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">      --data &#34;source_branch=$CI_COMMIT_REF_NAME&amp;target_branch=$current_branch&amp;title=Auto merge $CI_COMMIT_REF_NAME to $current_branch&#34; \
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">      &#34;https://$CI_SERVER_HOST/api/v4/projects/$CI_PROJECT_ID/merge_requests&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">    fi</span>    
+</span></span></code></pre></div><h4 id="42-在任务中引用公共脚本">
+  4.2 在任务中引用公共脚本
+</h4><p>在刚刚的<code>merge-to-stg</code>任务中，修改为使用 <code>*script_name</code> 引用预先定义的脚本片段</p>
+<div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#ff6ac1">merge-to-stg</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">stage</span>: merge
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">allow_failure</span>: <span style="color:#ff6ac1">true</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">script</span>:
+</span></span><span style="display:flex;"><span>    - <span style="color:#78787e">*fetch_script</span>
+</span></span><span style="display:flex;"><span>    - git checkout stg
+</span></span><span style="display:flex;"><span>    - <span style="color:#78787e">*merge_script</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">after_script</span>:
+</span></span><span style="display:flex;"><span>    - <span style="color:#78787e">*check_status_script</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">only</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#ff6ac1">refs</span>:
+</span></span><span style="display:flex;"><span>      - master
+</span></span></code></pre></div><p>同样，可以这么编写 <code>merge-to-pre</code> 任务，将代码合并到 <code>pre</code> 分支，避免重复编写相同的代码。</p>
+<h3 id="5-完整的-gitlab-ciyml-文件">
+  5. 完整的 <code>.gitlab-ci.yml</code> 文件
+</h3><div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#ff6ac1">image</span>: your-docker-image
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">stages</span>:
+</span></span><span style="display:flex;"><span>  - merge
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">.fetch_script</span>: <span style="color:#78787e">&amp;fetch_script</span>
+</span></span><span style="display:flex;"><span>  - git config --global user.email &#34;$GITLAB_USER_EMAIL&#34;
+</span></span><span style="display:flex;"><span>  - git config --global user.name &#34;$GITLAB_USER_LOGIN&#34;
+</span></span><span style="display:flex;"><span>  - git fetch origin
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">.merge_script</span>: <span style="color:#78787e">&amp;merge_script</span>
+</span></span><span style="display:flex;"><span>  - git merge origin/$CI_COMMIT_REF_NAME
+</span></span><span style="display:flex;"><span>  - git push https://oauth2:$PROJECT_ACCESS_TOKEN@$CI_SERVER_HOST/$CI_PROJECT_PATH.git
+</span></span><span style="display:flex;"><span>  - echo &#34;SUCCESS&#34; &gt; .job_status
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">.check_status_script</span>: <span style="color:#78787e">&amp;check_status_script</span>
+</span></span><span style="display:flex;"><span>  - job_status=$(cat .job_status 2&gt;/dev/null || echo &#34;FAILED&#34;)
+</span></span><span style="display:flex;"><span>  - current_branch=$(git rev-parse --abbrev-ref HEAD)
+</span></span><span style="display:flex;"><span>  - |<span style="color:#5af78e">
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">    if [ &#34;$job_status&#34; == &#39;SUCCESS&#39; ]; then
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">      echo &#34;Merge to $current_branch succeeded.&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">    else
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">      echo &#34;Merge to $current_branch failed.&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">      curl --request POST --header &#34;PRIVATE-TOKEN:$PROJECT_ACCESS_TOKEN&#34; \
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">      --data &#34;source_branch=$CI_COMMIT_REF_NAME&amp;target_branch=$current_branch&amp;title=Auto merge $CI_COMMIT_REF_NAME to $current_branch&#34; \
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">      &#34;https://$CI_SERVER_HOST/api/v4/projects/$CI_PROJECT_ID/merge_requests&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#5af78e">    fi</span>    
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">merge-to-stg</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">stage</span>: merge
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">allow_failure</span>: <span style="color:#ff6ac1">true</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">script</span>:
+</span></span><span style="display:flex;"><span>    - <span style="color:#78787e">*fetch_script</span>
+</span></span><span style="display:flex;"><span>    - git checkout stg
+</span></span><span style="display:flex;"><span>    - <span style="color:#78787e">*merge_script</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">after_script</span>:
+</span></span><span style="display:flex;"><span>    - <span style="color:#78787e">*check_status_script</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">only</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#ff6ac1">refs</span>:
+</span></span><span style="display:flex;"><span>      - master
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">merge-to-pre</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">stage</span>: merge
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">allow_failure</span>: <span style="color:#ff6ac1">true</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">script</span>:
+</span></span><span style="display:flex;"><span>    - <span style="color:#78787e">*fetch_script</span>
+</span></span><span style="display:flex;"><span>    - git checkout pre
+</span></span><span style="display:flex;"><span>    - <span style="color:#78787e">*merge_script</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">after_script</span>:
+</span></span><span style="display:flex;"><span>    - <span style="color:#78787e">*check_status_script</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">only</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#ff6ac1">refs</span>:
+</span></span><span style="display:flex;"><span>      - master
+</span></span></code></pre></div><h2 id="总结">
+  总结
+</h2><p>通过以上配置，我们实现了 <code>master</code> 分支有任何变更后，自动将其合并到 <code>stg</code> 和 <code>pre</code> 分支的功能。即使合并过程中出现冲突，脚本也会自动创建 MR，提醒开发者及时处理。这种自动化方式有效地解决了团队成员忘记手动合并的问题，确保了代码在不同环境中的一致性，提高了工作效率。</p>
+        </div>
+
+    </article>
+
+    
+    
+
+    
+        
+        
+    
+
+    
+
+    
+        
+
+
+
+
+
+
+
+
+
+    
+
+    
+
+    
+
+        </main>
+        
+            <footer class="common-footer noselect">
+    
+    
+        <ul class="language-select">
+    
+    
+    
+
+    
+        
+            <li><a href="/posts/auto-merge/">English</a></li>
+        
+    
+        
+            <li>中文</li>
+        
+    
+</ul>
+
+    
+
+    <div class="common-footer-bottom">
+        
+
+        <div style="display: flex; align-items: center; gap:8px">
+            ©  Yiqi,  2024
+            
+        </div>
+        <div style="display:flex;align-items: center">
+            
+            
+            
+            
+            
+            
+        </div>
+        <div>
+            Powered by <a target="_blank" rel="noopener noreferrer" href="https://gohugo.io/">Hugo</a>, theme <a target="_blank" rel="noopener noreferrer" href="https://github.com/Junyi-99/hugo-theme-anubis2">Anubis2</a>.<br>
+            
+
+        </div>
+    </div>
+
+    <p class="h-card vcard">
+
+    <a href=http://localhost:1313/ class="p-name u-url url fn" rel="me">map[email:halfseteamedbun@gmail.com location:Mainland China name:Yiqi]</a>
+
+    
+
+    
+</p>
+
+</footer>
+
+        
+    </div>
+</body>
+</html>

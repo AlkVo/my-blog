@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+
+
+<html lang="zh" data-theme="">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+    
+        
+<meta charset="utf-8">
+<meta name="HandheldFriendly" content="True">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="referrer" content="no-referrer-when-downgrade">
+
+<title>Advance Typescript - Yiqi&rsquo;s blog</title>
+
+<meta name="description" content="
+  背景
+
+  使用 TypeScript 的好处
+使用 TypeScript 有很多的好处，它可以让代码变得更可靠和更容易维护：
+
+可靠性: TypeScript 的类型系统能在写代码时捕捉到很多错误，这样可以减少运行时的出错几率，让代码更加稳定。
+可读性: 明确的类型定义让代码更容易理解，这对开发者来说维护起来更简单。
+重命名和重构的低成本:类型检查器可以帮助我们在重命名和重构代码时找到正确的内容，从而有效减少新错误的引入风险。
+
+
+  如果不小心滥用&hellip;?
+然而，TypeScript 也像一把双刃剑，如果不小心滥用，可能会引发一些问题：">
+
+
+
+
+
+<link rel="icon" type="image/x-icon" href="http://localhost:1313/favicon.ico">
+<link rel="apple-touch-icon-precomposed" href="http://localhost:1313/favicon.png">
+
+
+
+
+
+
+
+
+    
+
+
+
+<style>
+  body {
+    visibility: hidden;
+    opacity: 0;
+  }
+</style>
+
+<noscript>
+  <style>
+    body {
+      visibility: visible;
+      opacity: 1;
+    }
+  </style>
+</noscript>
+
+
+
+
+    
+
+
+
+
+
+    
+    
+    
+
+    
+        <link rel="stylesheet" href="/css/style.03df79c682b91915c7cd261ecd1a6ec4d0fe668c98fa46310d0fbade319b11bd.css" integrity="sha256-A995xoK5GRXHzSYezRpuxND&#43;ZoyY&#43;kYxDQ&#43;63jGbEb0=">
+    
+
+
+
+
+
+    
+
+
+
+
+
+    
+    
+    
+
+    
+        <link rel="stylesheet" href="/css/style.9c1888ebff42c0224ce04dac10cb2c401f1b77f54f78e8d87d73c3bed781c263.css" integrity="sha256-nBiI6/9CwCJM4E2sEMssQB8bd/VPeOjYfXPDvteBwmM=">
+    
+
+
+
+
+
+    
+
+
+
+
+
+    
+    
+    
+
+    
+        <link rel="stylesheet" href="/css/style.acd606c0fce58853afe0248d37bb41acbbcdd8b1aca2412b6c0fa760da0137f3.css" integrity="sha256-rNYGwPzliFOv4CSNN7tBrLvN2LGsokErbA&#43;nYNoBN/M=">
+    
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
+    
+
+
+
+
+
+    
+    
+    
+
+    
+        <script src="/js/script.672e2309c296e07c18bcd08b28d797a56222ff941d65f308fba3158c44885b14.js" type="text/javascript" charset="utf-8" integrity="sha256-Zy4jCcKW4HwYvNCLKNeXpWIi/5QdZfMI&#43;6MVjESIWxQ="></script>
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+</head>
+<body>
+    <a class="skip-main" href="#main">Skip to main content</a>
+    <div class="container">
+        <header class="common-header">
+            
+                <div class="header-top">
+    <div class="header-top-left">
+        <h1 class="site-title noselect">
+    <a href="/zh">Yiqi&#39;s blog</a>
+</h1>
+
+        
+
+
+
+
+
+
+
+    
+        <div class="theme-switcher">
+            <span class="inline-svg">
+
+    
+
+
+    
+    
+    
+    
+    
+
+    <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-sun-high"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14.828 14.828a4 4 0 1 0 -5.656 -5.656a4 4 0 0 0 5.656 5.656z" /><path d="M6.343 17.657l-1.414 1.414" /><path d="M6.343 6.343l-1.414 -1.414" /><path d="M17.657 6.343l1.414 -1.414" /><path d="M17.657 17.657l1.414 1.414" /><path d="M4 12h-2" /><path d="M12 4v-2" /><path d="M20 12h2" /><path d="M12 20v2" /></svg>
+
+
+</span>
+
+        </div>
+    
+
+    <script>
+        const STORAGE_KEY = 'user-color-scheme'
+        const defaultTheme = "light"
+
+        let currentTheme
+        let switchButton
+        let autoDefinedScheme = window.matchMedia('(prefers-color-scheme: dark)')
+
+        function switchTheme(e) {
+            currentTheme = (currentTheme === 'dark') ? 'light' : 'dark';
+            if (localStorage) localStorage.setItem(STORAGE_KEY, currentTheme);
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            changeGiscusTheme(currentTheme);
+            document.body.dispatchEvent(new CustomEvent(currentTheme + "-theme-set"));
+        }
+
+        const autoChangeScheme = e => {
+            currentTheme = e.matches ? 'dark' : 'light'
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            changeGiscusTheme(currentTheme);
+            document.body.dispatchEvent(new CustomEvent(currentTheme + "-theme-set"));
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            switchButton = document.querySelector('.theme-switcher')
+            currentTheme = detectCurrentScheme()
+
+            if (currentTheme === 'auto') {
+                autoChangeScheme(autoDefinedScheme);
+                autoDefinedScheme.addListener(autoChangeScheme);
+            } else {
+                document.documentElement.setAttribute('data-theme', currentTheme)
+            }
+
+            if (switchButton) {
+                switchButton.addEventListener('click', switchTheme, false)
+            }
+
+            showContent();
+        })
+
+        function detectCurrentScheme() {
+            if (localStorage !== null && localStorage.getItem(STORAGE_KEY)) {
+                return localStorage.getItem(STORAGE_KEY)
+            }
+            if (defaultTheme) {
+                return defaultTheme
+            }
+            return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+
+        function showContent() {
+            document.body.style.visibility = 'visible';
+            document.body.style.opacity = 1;
+        }
+
+        function changeGiscusTheme (theme) {
+            function sendMessage(message) {
+              const iframe = document.querySelector('iframe.giscus-frame');
+              if (!iframe) return;
+              iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+            }
+
+            sendMessage({
+              setConfig: {
+                theme: theme
+              }
+            });
+        }
+    </script>
+
+
+        <ul class="social-icons noselect">
+
+
+
+
+
+
+
+    <li>
+            <a href="/zh/index.xml" title="RSS" rel="me">
+            <span class="inline-svg">
+
+    
+
+
+    
+    
+    
+    
+    
+
+    <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-rss"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 19m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M4 4a16 16 0 0 1 16 16" /><path d="M4 11a9 9 0 0 1 9 9" /></svg>
+
+
+</span>
+
+            </a>
+        </li>
+    
+
+</ul>
+
+    </div>
+    <div class="header-top-right">
+
+    </div>
+</div>
+
+
+    <nav class="noselect">
+        
+        
+        <a class="" href="http://localhost:1313/zh/" title="">Home</a>
+        
+        <a class="" href="http://localhost:1313/zh/about/" title="">About</a>
+        
+        <a class="" href="http://localhost:1313/zh/tags/" title="">Tags</a>
+        
+    </nav>
+
+
+
+
+
+
+
+
+            
+        </header>
+        <main id="main" tabindex="-1">
+            
+    
+
+    <article class="post h-entry">
+        <div class="post-header">
+            <header>
+                <h1 class="p-name post-title">Advance Typescript</h1>
+                
+    
+    <span>
+        <ul class="post-translations">
+            
+                
+                    <li>
+                        <a href="/posts/advance-typescript/">EN</a>
+                    </li>
+                
+            
+                
+                    <li>
+                        ZH
+                    </li>
+                
+            
+        </ul>
+    </span>
+
+
+            </header>
+            
+
+
+
+<div class="post-info noselect">
+    
+        <div class="post-date dt-published">
+            <time datetime="2024-03-01">2024-03-01</time>
+            
+        </div>
+    
+
+    <a class="post-hidden-url u-url" href="/zh/posts/advance-typescript/">/zh/posts/advance-typescript/</a>
+    <a href="http://localhost:1313/" class="p-name p-author post-hidden-author h-card" rel="me">map[email:halfseteamedbun@gmail.com location:Mainland China name:Yiqi]</a>
+
+
+    <div class="post-taxonomies">
+        
+        
+            <ul class="post-tags">
+                
+                    
+                    <li><a href="/zh/tags/fe/">#FE</a></li>
+                
+                    
+                    <li><a href="/zh/tags/typescript/">#TypeScript</a></li>
+                
+            </ul>
+        
+        
+    </div>
+</div>
+
+        </div>
+        
+
+  
+  
+    
+  
+
+
+
+
+
+
+<script>
+  var toc = document.querySelector(".toc");
+  if (toc) {
+    toc.addEventListener("click", function () {
+      if (event.target.tagName !== "A") {
+        event.preventDefault();
+        if (this.open) {
+          this.open = false;
+          this.classList.remove("expanded");
+        } else {
+          this.open = true;
+          this.classList.add("expanded");
+        }
+      }
+    });
+  }
+</script>
+
+        <div class="content e-content">
+            <h2 id="背景">
+  背景
+</h2><h3 id="使用-typescript-的好处">
+  使用 TypeScript 的好处
+</h3><p>使用 TypeScript 有很多的好处，它可以让代码变得更可靠和更容易维护：</p>
+<ul>
+<li><strong>可靠性</strong>: TypeScript 的类型系统能在写代码时捕捉到很多错误，这样可以减少运行时的出错几率，让代码更加稳定。</li>
+<li><strong>可读性</strong>: 明确的类型定义让代码更容易理解，这对开发者来说维护起来更简单。</li>
+<li><strong>重命名和重构的低成本</strong>:类型检查器可以帮助我们在重命名和重构代码时找到正确的内容，从而有效减少新错误的引入风险。</li>
+</ul>
+<h3 id="如果不小心滥用">
+  如果不小心滥用&hellip;?
+</h3><p>然而，TypeScript 也像一把双刃剑，如果不小心滥用，可能会引发一些问题：</p>
+<ul>
+<li>
+<p><strong>联合类型的滥用</strong>: 随着业务逻辑的复杂化，联合类型可能会变得越来越复杂，导致某些属性变得不可访问。</p>
+<div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-TypeScript" data-lang="TypeScript"><span style="display:flex;"><span><span style="color:#ff6ac1">type</span> A <span style="color:#ff6ac1">=</span> { foo: <span style="color:#9aedfe">string</span> };
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">type</span> B <span style="color:#ff6ac1">=</span> { bar: <span style="color:#9aedfe">number</span> };
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">type</span> C <span style="color:#ff6ac1">=</span> A <span style="color:#ff6ac1">|</span> B;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff5c57">function</span> getFoo(obj: <span style="color:#9aedfe">C</span>) {
+</span></span><span style="display:flex;"><span>  obj.foo(); <span style="color:#78787e">// ❌ 不存在
+</span></span></span><span style="display:flex;"><span><span style="color:#78787e"></span>  obj.bar(); <span style="color:#78787e">// ❌ 不存在
+</span></span></span><span style="display:flex;"><span><span style="color:#78787e"></span>}
+</span></span></code></pre></div></li>
+<li>
+<p><strong>类型断言的滥用</strong>: 为了处理复杂的类型问题，可能会频繁使用 <code>as</code>操作符。虽然这可以把问题解决，但会使代码变得不那么优雅和脆弱。</p>
+</li>
+</ul>
+<p>这些滥用常常会让代码更难维护，也更容易出错。</p>
+<p>接下来，我会结合自己的开发经验，和大家讨论如何更好地使用 TypeScript。</p>
+<p>例如泛型、<code>extends</code>、<code>keyof</code>、<code>infer</code>，甚至类型递归，帮助我们编写更健壮、优雅且易维护的代码。</p>
+<p>通过深入理解和应用这些特性，我们可以更好地应对复杂类型的挑战，同时保持代码的清晰和可读性。</p>
+<hr>
+<h2 id="lets-go-">
+  Let&rsquo;s go ~
+</h2><h3 id="1-generic">
+  1. Generic
+</h3><p>泛型是一种让函数、接口或类型可以接受多种类型的特性，使代码更加通用和可复用。</p>
+<p>任何类型都可以成为泛型。它由你来制定。</p>
+<p>比如下面的代码，当传入的类型 T 是 <code>number</code> ，那么 返回类型 T 就是 <code>number</code>。当传入的类型 T 是 <code>string</code> ，那么 返回类型 T 就是 <code>string</code>。</p>
+<div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-TypeScript" data-lang="TypeScript"><span style="display:flex;"><span><span style="color:#ff5c57">function</span> identity&lt;<span style="color:#ff6ac1">T</span>&gt;(arg: <span style="color:#9aedfe">T</span>)<span style="color:#ff6ac1">:</span> T {
+</span></span><span style="display:flex;"><span>    <span style="color:#ff6ac1">return</span> arg;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">const</span> num <span style="color:#ff6ac1">=</span> identity(<span style="color:#ff9f43">42</span>); <span style="color:#78787e">// number
+</span></span></span><span style="display:flex;"><span><span style="color:#78787e"></span><span style="color:#ff6ac1">const</span> str <span style="color:#ff6ac1">=</span> identity(<span style="color:#5af78e">&#39;hello&#39;</span>); <span style="color:#78787e">// string
+</span></span></span></code></pre></div><p>泛型的使用可以帮助我们减少代码重复，增强类型的灵活性和安全性。</p>
+<p>例如处理 API 响应时，<code>ApiResponse&lt;T&gt;</code> 接口可以接受不同类型的数据结构。</p>
+<div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-TypeScript" data-lang="TypeScript"><span style="display:flex;"><span><span style="color:#ff6ac1">type</span> ApiResponse&lt;<span style="color:#ff6ac1">T</span>&gt; <span style="color:#ff6ac1">=</span> {
+</span></span><span style="display:flex;"><span>  data: <span style="color:#9aedfe">T</span>;
+</span></span><span style="display:flex;"><span>  status: <span style="color:#9aedfe">number</span>;
+</span></span><span style="display:flex;"><span>  message: <span style="color:#9aedfe">string</span>;
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#78787e">// 👤
+</span></span></span><span style="display:flex;"><span><span style="color:#78787e"></span><span style="color:#ff6ac1">type</span> User <span style="color:#ff6ac1">=</span> { id: <span style="color:#9aedfe">number</span>; name: <span style="color:#9aedfe">string</span> };
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">const</span> userResponse: <span style="color:#9aedfe">ApiResponse</span>&lt;<span style="color:#ff6ac1">User</span>&gt; <span style="color:#ff6ac1">=</span> {
+</span></span><span style="display:flex;"><span>  data<span style="color:#ff6ac1">:</span> { id: <span style="color:#9aedfe">1</span>, name<span style="color:#ff6ac1">:</span> <span style="color:#5af78e">&#34;Alice&#34;</span> },
+</span></span><span style="display:flex;"><span>  status: <span style="color:#9aedfe">200</span>,
+</span></span><span style="display:flex;"><span>  message<span style="color:#ff6ac1">:</span> <span style="color:#5af78e">&#34;Success&#34;</span>,
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#78787e">// 📖
+</span></span></span><span style="display:flex;"><span><span style="color:#78787e"></span><span style="color:#ff6ac1">type</span> Book <span style="color:#ff6ac1">=</span> {
+</span></span><span style="display:flex;"><span>  id: <span style="color:#9aedfe">number</span>;
+</span></span><span style="display:flex;"><span>  title: <span style="color:#9aedfe">string</span>;
+</span></span><span style="display:flex;"><span>  author: <span style="color:#9aedfe">string</span>;
+</span></span><span style="display:flex;"><span>  price: <span style="color:#9aedfe">number</span>;
+</span></span><span style="display:flex;"><span>  inStock: <span style="color:#9aedfe">boolean</span>;
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">const</span> bookResponse: <span style="color:#9aedfe">ApiResponse</span>&lt;<span style="color:#ff6ac1">Book</span>&gt; <span style="color:#ff6ac1">=</span> {
+</span></span><span style="display:flex;"><span>  data<span style="color:#ff6ac1">:</span> {
+</span></span><span style="display:flex;"><span>    id: <span style="color:#9aedfe">1</span>,
+</span></span><span style="display:flex;"><span>    title<span style="color:#ff6ac1">:</span> <span style="color:#5af78e">&#34;深入理解 TypeScript&#34;</span>,
+</span></span><span style="display:flex;"><span>    author<span style="color:#ff6ac1">:</span> <span style="color:#5af78e">&#34;张三&#34;</span>,
+</span></span><span style="display:flex;"><span>    price: <span style="color:#9aedfe">59.99</span>,
+</span></span><span style="display:flex;"><span>    inStock: <span style="color:#9aedfe">true</span>,
+</span></span><span style="display:flex;"><span>  },
+</span></span><span style="display:flex;"><span>  status: <span style="color:#9aedfe">200</span>,
+</span></span><span style="display:flex;"><span>  message<span style="color:#ff6ac1">:</span> <span style="color:#5af78e">&#34;Success&#34;</span>,
+</span></span><span style="display:flex;"><span>};
+</span></span></code></pre></div><h3 id="2-keyof">
+  2. keyof
+</h3><p><code>keyof</code> 可以轻松获取 object 的 keys</p>
+<div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-TypeScript" data-lang="TypeScript"><span style="display:flex;"><span><span style="color:#ff6ac1">type</span> User <span style="color:#ff6ac1">=</span> {
+</span></span><span style="display:flex;"><span>    id: <span style="color:#9aedfe">number</span>;
+</span></span><span style="display:flex;"><span>    name: <span style="color:#9aedfe">string</span>;
+</span></span><span style="display:flex;"><span>    age: <span style="color:#9aedfe">number</span>;
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">type</span> UserKeys <span style="color:#ff6ac1">=</span> <span style="color:#ff6ac1">keyof</span> User; <span style="color:#78787e">// &#34;id&#34; | &#34;name&#34; | &#34;age&#34;
+</span></span></span></code></pre></div><p>假设我们的后端正在做 v1 到 v2 的版本升级，v1 版本接口和 v2 版本接口数据的改变是 key 的命名方式从 snake_case 变成 camelCase，其余都一致。那么原本函数的数据处理逻辑我们可以保留，只需把它传入的数据类型变为泛型，并且通过 <code>keyof</code> 约束需要被处理的 key 的输入。</p>
+<div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-TypeScript" data-lang="TypeScript"><span style="display:flex;"><span><span style="color:#ff6ac1">enum</span> PayeeType {
+</span></span><span style="display:flex;"><span>  CASH_PAYEE <span style="color:#ff6ac1">=</span> <span style="color:#ff9f43">1</span>,
+</span></span><span style="display:flex;"><span>  NON_CASH_PAYEE <span style="color:#ff6ac1">=</span> <span style="color:#ff9f43">2</span>,
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">type</span> Address <span style="color:#ff6ac1">=</span> {
+</span></span><span style="display:flex;"><span>  is_cash_payment_stop: <span style="color:#9aedfe">PayeeType</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">type</span> AddressV2 <span style="color:#ff6ac1">=</span> {
+</span></span><span style="display:flex;"><span>  isCashPaymentStop: <span style="color:#9aedfe">PayeeType</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">const</span> getCashPayeeText <span style="color:#ff6ac1">=</span> &lt;<span style="color:#ff6ac1">T</span>&gt;(address: <span style="color:#9aedfe">T</span>[], field: <span style="color:#9aedfe">keyof</span> T) <span style="color:#ff6ac1">=&gt;</span> {
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">const</span> cashPayeeIndex <span style="color:#ff6ac1">=</span> address.findIndex(
+</span></span><span style="display:flex;"><span>    (addr) <span style="color:#ff6ac1">=&gt;</span> addr[field] <span style="color:#ff6ac1">===</span> PayeeType.CASH_PAYEE,
+</span></span><span style="display:flex;"><span>  )
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">if</span> (cashPayeeIndex <span style="color:#ff6ac1">===</span> <span style="color:#ff6ac1">-</span><span style="color:#ff9f43">1</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#ff6ac1">return</span> <span style="color:#5af78e">&#39;Not Specified&#39;</span>
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">const</span> isFirstStop <span style="color:#ff6ac1">=</span> cashPayeeIndex <span style="color:#ff6ac1">===</span> <span style="color:#ff9f43">0</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">if</span> (isFirstStop) {
+</span></span><span style="display:flex;"><span>    <span style="color:#ff6ac1">return</span> <span style="color:#5af78e">&#39;Sender&#39;</span>
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">const</span> isLastStop <span style="color:#ff6ac1">=</span> cashPayeeIndex <span style="color:#ff6ac1">===</span> address.length <span style="color:#ff6ac1">-</span> <span style="color:#ff9f43">1</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">if</span> (isLastStop) {
+</span></span><span style="display:flex;"><span>    <span style="color:#ff6ac1">return</span> <span style="color:#5af78e">&#39;Recipient&#39;</span>
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">return</span> <span style="color:#5af78e">`Stop </span><span style="color:#5af78e">${</span>cashPayeeIndex <span style="color:#ff6ac1">+</span> <span style="color:#ff9f43">1</span><span style="color:#5af78e">}</span><span style="color:#5af78e">`</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">const</span> getCashPayeeTextV1 <span style="color:#ff6ac1">=</span> (address: <span style="color:#9aedfe">Address</span>[]) <span style="color:#ff6ac1">=&gt;</span>
+</span></span><span style="display:flex;"><span>  getCashPayeeText(address, <span style="color:#5af78e">&#39;is_cash_payment_stop&#39;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">const</span> getCashPayeeTextV2 <span style="color:#ff6ac1">=</span> (address: <span style="color:#9aedfe">AddressV2</span>[]) <span style="color:#ff6ac1">=&gt;</span>
+</span></span><span style="display:flex;"><span>  getCashPayeeText(address, <span style="color:#5af78e">&#39;isCashPaymentStop&#39;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#78787e">//❌
+</span></span></span><span style="display:flex;"><span><span style="color:#78787e"></span><span style="color:#ff6ac1">const</span> getCashPayeeTextV2 <span style="color:#ff6ac1">=</span> (address: <span style="color:#9aedfe">AddressV2</span>[]) <span style="color:#ff6ac1">=&gt;</span>
+</span></span><span style="display:flex;"><span>  getCashPayeeText(address, <span style="color:#5af78e">&#39;123&#39;</span>)
+</span></span><span style="display:flex;"><span><span style="color:#78787e">//❌
+</span></span></span><span style="display:flex;"><span><span style="color:#78787e"></span><span style="color:#ff6ac1">const</span> getCashPayeeTextV2 <span style="color:#ff6ac1">=</span> (address: <span style="color:#9aedfe">AddressV2</span>[]) <span style="color:#ff6ac1">=&gt;</span>
+</span></span><span style="display:flex;"><span>  getCashPayeeText(address, <span style="color:#5af78e">&#39;is_cash_payment_stop&#39;</span>)
+</span></span></code></pre></div><p>但在使用中可能会发现一个问题，由于 <code>keyof</code> 的结果是一个联合类型，那么 <code>Type[keyof Type]</code> 的类型也会是联合类型。</p>
+<p>所以在下面的函数中，即使我们知道传入的 key 是什么类型，但是返回类型却是一个联合类型</p>
+<div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-TypeScript" data-lang="TypeScript"><span style="display:flex;"><span><span style="color:#ff5c57">function</span> getProperty&lt;<span style="color:#ff6ac1">T</span>&gt;(obj: <span style="color:#9aedfe">T</span>, key: <span style="color:#9aedfe">keyof</span> T) {
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">return</span> obj[key]
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">const</span> user <span style="color:#ff6ac1">=</span> {
+</span></span><span style="display:flex;"><span>  id: <span style="color:#9aedfe">1</span>,
+</span></span><span style="display:flex;"><span>  name<span style="color:#ff6ac1">:</span> <span style="color:#5af78e">&#39;Alice&#39;</span>,
+</span></span><span style="display:flex;"><span>  age: <span style="color:#9aedfe">30</span>,
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">const</span> myName <span style="color:#ff6ac1">=</span> getProperty(user, <span style="color:#5af78e">&#39;name&#39;</span>) <span style="color:#78787e">//  string|number
+</span></span></span><span style="display:flex;"><span><span style="color:#78787e"></span><span style="color:#ff6ac1">const</span> myAge <span style="color:#ff6ac1">=</span> getProperty(user, <span style="color:#5af78e">&#39;age&#39;</span>) <span style="color:#78787e">// string|number
+</span></span></span></code></pre></div><p>真是让人沮丧！</p>
+<p>那么如何解决这个问题呢？交给 <code>extends</code>。</p>
+<h3 id="3-extends">
+  3. extends
+</h3><p><code>extends</code> 操作符可用于类型约束，确保传入的类型具有特定的结构。</p>
+<p><code>K extends keyof T</code>可以理解为，<code>K</code> 是某个类型，这个类型在 <code>keyof T</code> 内。</p>
+<p>既然不是联合类型，而是单一类型 ，那么类型推导可以根据 <code>K</code> 的类型成功推导出 <code>T[K]</code>是什么类型了 🎉！</p>
+<div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-TypeScript" data-lang="TypeScript"><span style="display:flex;"><span><span style="color:#ff5c57">function</span> getProperty&lt;<span style="color:#ff6ac1">T</span><span style="color:#ff5c57">,</span> <span style="color:#57c7ff">K</span> <span style="color:#57c7ff">extends</span> <span style="color:#57c7ff">keyof</span> <span style="color:#57c7ff">T</span>&gt;(obj: <span style="color:#9aedfe">T</span>, key: <span style="color:#9aedfe">K</span>)<span style="color:#ff6ac1">:</span> T[K] {
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">return</span> obj[key]
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">const</span> user <span style="color:#ff6ac1">=</span> {
+</span></span><span style="display:flex;"><span>  id: <span style="color:#9aedfe">1</span>,
+</span></span><span style="display:flex;"><span>  name<span style="color:#ff6ac1">:</span> <span style="color:#5af78e">&#39;Alice&#39;</span>,
+</span></span><span style="display:flex;"><span>  age: <span style="color:#9aedfe">30</span>,
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">const</span> myName <span style="color:#ff6ac1">=</span> getProperty(user, <span style="color:#5af78e">&#39;name&#39;</span>) <span style="color:#78787e">//  string
+</span></span></span><span style="display:flex;"><span><span style="color:#78787e"></span><span style="color:#ff6ac1">const</span> myAge <span style="color:#ff6ac1">=</span> getProperty(user, <span style="color:#5af78e">&#39;age&#39;</span>) <span style="color:#78787e">// number
+</span></span></span></code></pre></div><p><code>extends</code>也可以和三目运算符结合，得到想要的类型</p>
+<div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-TypeScript" data-lang="TypeScript"><span style="display:flex;"><span><span style="color:#ff6ac1">type</span> Action <span style="color:#ff6ac1">=</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">|</span> { action<span style="color:#ff6ac1">:</span> <span style="color:#5af78e">&#39;create&#39;</span>; item: <span style="color:#9aedfe">string</span> }
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">|</span> { action<span style="color:#ff6ac1">:</span> <span style="color:#5af78e">&#39;update&#39;</span>; itemId: <span style="color:#9aedfe">number</span>; newValue: <span style="color:#9aedfe">string</span> }
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">|</span> { action<span style="color:#ff6ac1">:</span> <span style="color:#5af78e">&#39;delete&#39;</span>; itemId: <span style="color:#9aedfe">number</span> }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">type</span> ExtractAction&lt;<span style="color:#ff6ac1">T</span><span style="color:#ff5c57">,</span> <span style="color:#57c7ff">U</span>&gt; <span style="color:#ff6ac1">=</span> T <span style="color:#ff6ac1">extends</span> { action: <span style="color:#9aedfe">U</span> } <span style="color:#ff6ac1">?</span> T : <span style="color:#9aedfe">never</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">type</span> CreateAction <span style="color:#ff6ac1">=</span> ExtractAction&lt;<span style="color:#ff6ac1">Action</span><span style="color:#ff5c57">,</span> <span style="color:#ff5c57">&#39;</span><span style="color:#57c7ff">create</span><span style="color:#ff5c57">&#39;</span>&gt; <span style="color:#78787e">// { action: &#39;create&#39;; item: string }
+</span></span></span><span style="display:flex;"><span><span style="color:#78787e"></span><span style="color:#ff6ac1">type</span> UpdateAction <span style="color:#ff6ac1">=</span> ExtractAction&lt;<span style="color:#ff6ac1">Action</span><span style="color:#ff5c57">,</span> <span style="color:#ff5c57">&#39;</span><span style="color:#57c7ff">update</span><span style="color:#ff5c57">&#39;</span>&gt; <span style="color:#78787e">// { action: &#39;update&#39;; itemId: number; newValue: string }
+</span></span></span><span style="display:flex;"><span><span style="color:#78787e"></span><span style="color:#ff6ac1">type</span> DeleteAction <span style="color:#ff6ac1">=</span> ExtractAction&lt;<span style="color:#ff6ac1">Action</span><span style="color:#ff5c57">,</span> <span style="color:#ff5c57">&#39;</span><span style="color:#57c7ff">delete</span><span style="color:#ff5c57">&#39;</span>&gt; <span style="color:#78787e">// { action: &#39;delete&#39;; itemId: number }
+</span></span></span></code></pre></div><h3 id="4-in">
+  4. in
+</h3><p><code>in</code> 操作符可以用于遍历对象类型的键，从而生成新的对象类型。
+这种方式可以用于生成具有特定键名和类型的对象，增加代码的灵活性。</p>
+<div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-TypeScript" data-lang="TypeScript"><span style="display:flex;"><span><span style="color:#ff6ac1">type</span> ValueBeKey&lt;<span style="color:#ff6ac1">T</span> <span style="color:#57c7ff">extends</span> <span style="color:#57c7ff">Record</span><span style="color:#ff5c57">&lt;</span><span style="color:#57c7ff">string</span><span style="color:#ff5c57">,</span> <span style="color:#57c7ff">unknown</span>&gt;<span style="color:#ff6ac1">&gt;</span> <span style="color:#ff6ac1">=</span> {
+</span></span><span style="display:flex;"><span>  [P <span style="color:#ff6ac1">in</span> <span style="color:#ff6ac1">keyof</span> T]<span style="color:#ff6ac1">:</span> P;
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">const</span> <span style="color:#9aedfe">object</span> <span style="color:#ff6ac1">=</span> {
+</span></span><span style="display:flex;"><span>  a: <span style="color:#9aedfe">1</span>,
+</span></span><span style="display:flex;"><span>  b: <span style="color:#9aedfe">2</span>,
+</span></span><span style="display:flex;"><span>  c: <span style="color:#9aedfe">3</span>,
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">const</span> result: <span style="color:#9aedfe">ValueBeKey</span>&lt;<span style="color:#ff6ac1">typeof</span> <span style="color:#57c7ff">object</span>&gt; <span style="color:#ff6ac1">=</span> {
+</span></span><span style="display:flex;"><span>  a<span style="color:#ff6ac1">:</span> <span style="color:#5af78e">&#39;a&#39;</span>,
+</span></span><span style="display:flex;"><span>  b<span style="color:#ff6ac1">:</span> <span style="color:#5af78e">&#39;b&#39;</span>,
+</span></span><span style="display:flex;"><span>  c<span style="color:#ff6ac1">:</span> <span style="color:#5af78e">&#39;c&#39;</span>,
+</span></span><span style="display:flex;"><span>};
+</span></span></code></pre></div><p>让我们来实现官方提供的 Partial 和 Required</p>
+<div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-TypeScript" data-lang="TypeScript"><span style="display:flex;"><span><span style="color:#ff6ac1">type</span> User <span style="color:#ff6ac1">=</span> {
+</span></span><span style="display:flex;"><span>  id: <span style="color:#9aedfe">number</span>
+</span></span><span style="display:flex;"><span>  name: <span style="color:#9aedfe">string</span>
+</span></span><span style="display:flex;"><span>  age: <span style="color:#9aedfe">number</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">type</span> Partial&lt;<span style="color:#ff6ac1">T</span>&gt; <span style="color:#ff6ac1">=</span> {
+</span></span><span style="display:flex;"><span>  [K <span style="color:#ff6ac1">in</span> <span style="color:#ff6ac1">keyof</span> T]<span style="color:#ff6ac1">?:</span> T[K]
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">type</span> Required&lt;<span style="color:#ff6ac1">T</span>&gt; <span style="color:#ff6ac1">=</span> {
+</span></span><span style="display:flex;"><span>  [K <span style="color:#ff6ac1">in</span> <span style="color:#ff6ac1">keyof</span> T]<span style="color:#ff6ac1">-?:</span> T[K]
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">type</span> OptionalUser <span style="color:#ff6ac1">=</span> Partial&lt;<span style="color:#ff6ac1">User</span>&gt;
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">type</span> RequiredUser <span style="color:#ff6ac1">=</span> Required&lt;<span style="color:#ff6ac1">OptionalUser</span>&gt;
+</span></span></code></pre></div><p>也可以结合 <code>as</code>,根据以前的 key 生成新的 key name</p>
+<div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-TypeScript" data-lang="TypeScript"><span style="display:flex;"><span><span style="color:#ff6ac1">type</span> MappedUser <span style="color:#ff6ac1">=</span> {
+</span></span><span style="display:flex;"><span>  [K <span style="color:#ff6ac1">in</span> <span style="color:#ff6ac1">keyof</span> User <span style="color:#ff6ac1">as</span> <span style="color:#5af78e">`user_</span><span style="color:#5af78e">${</span>K<span style="color:#5af78e">}</span><span style="color:#5af78e">`</span>]<span style="color:#ff6ac1">:</span> User[K]
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">type</span> UserWithPrefixedKeys <span style="color:#ff6ac1">=</span> MappedUser <span style="color:#78787e">// { user_id: number; user_name: string; user_age: number }
+</span></span></span></code></pre></div><p>或者和 <code>extends</code>结合，筛选出符合对应类型的 key</p>
+<div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-TypeScript" data-lang="TypeScript"><span style="display:flex;"><span><span style="color:#ff6ac1">type</span> FilterByType&lt;<span style="color:#ff6ac1">T</span><span style="color:#ff5c57">,</span> <span style="color:#57c7ff">Condition</span>&gt; <span style="color:#ff6ac1">=</span> {
+</span></span><span style="display:flex;"><span>  [K <span style="color:#ff6ac1">in</span> <span style="color:#ff6ac1">keyof</span> T]<span style="color:#ff6ac1">:</span> T[K] <span style="color:#ff6ac1">extends</span> Condition <span style="color:#ff6ac1">?</span> K : <span style="color:#9aedfe">never</span>
+</span></span><span style="display:flex;"><span>}[<span style="color:#ff6ac1">keyof</span> T]
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">type</span> StringKeysOfUser <span style="color:#ff6ac1">=</span> FilterByType&lt;<span style="color:#ff6ac1">User</span><span style="color:#ff5c57">,</span> <span style="color:#57c7ff">string</span>&gt; <span style="color:#78787e">// name
+</span></span></span><span style="display:flex;"><span><span style="color:#78787e"></span><span style="color:#ff6ac1">type</span> NumberKeysOfUser <span style="color:#ff6ac1">=</span> FilterByType&lt;<span style="color:#ff6ac1">User</span><span style="color:#ff5c57">,</span> <span style="color:#57c7ff">number</span>&gt; <span style="color:#78787e">// &#34;id&#34; | &#34;age&#34;
+</span></span></span></code></pre></div><p>假如存在一个接口，它的请求中如果带有 <code>user</code> 则接口中就会返回 <code>user</code>对象，它的请求中如果带有 <code>driver</code> 则接口中就会返回 <code>driver</code>对象。它的请求中如果带有<code>user</code>和<code>driver</code>，那么就会返回<code>user</code>和<code>driver</code>对象。那么我们就可以结合上面的 <code>extends</code> 帮我们完成这件事。</p>
+<div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-TypeScript" data-lang="TypeScript"><span style="display:flex;"><span><span style="color:#ff6ac1">type</span> Extensions <span style="color:#ff6ac1">=</span> {
+</span></span><span style="display:flex;"><span>  user<span style="color:#ff6ac1">:</span> { id: <span style="color:#9aedfe">string</span>; name: <span style="color:#9aedfe">string</span> }
+</span></span><span style="display:flex;"><span>  driver<span style="color:#ff6ac1">:</span> { phone: <span style="color:#9aedfe">string</span> }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">type</span> GetOrderParams&lt;<span style="color:#ff6ac1">K</span> <span style="color:#57c7ff">extends</span> <span style="color:#57c7ff">keyof</span> <span style="color:#57c7ff">Extensions</span>&gt; <span style="color:#ff6ac1">=</span> {
+</span></span><span style="display:flex;"><span>  orderUuid: <span style="color:#9aedfe">string</span>
+</span></span><span style="display:flex;"><span>  extendKeys?: <span style="color:#9aedfe">K</span>[]
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">type</span> OrderResponse&lt;<span style="color:#ff6ac1">K</span> <span style="color:#57c7ff">extends</span> <span style="color:#57c7ff">keyof</span> <span style="color:#57c7ff">Extensions</span>&gt; <span style="color:#ff6ac1">=</span> {
+</span></span><span style="display:flex;"><span>  orderUuid: <span style="color:#9aedfe">string</span>
+</span></span><span style="display:flex;"><span>  cityId: <span style="color:#9aedfe">string</span>
+</span></span><span style="display:flex;"><span>  marketId: <span style="color:#9aedfe">number</span>
+</span></span><span style="display:flex;"><span>  extensions<span style="color:#ff6ac1">:</span> {
+</span></span><span style="display:flex;"><span>    [key <span style="color:#ff6ac1">in</span> K]<span style="color:#ff6ac1">:</span> Extensions[key]
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">export</span> <span style="color:#ff6ac1">const</span> getOrder <span style="color:#ff6ac1">=</span> &lt;<span style="color:#ff6ac1">K</span> <span style="color:#57c7ff">extends</span> <span style="color:#57c7ff">keyof</span> <span style="color:#57c7ff">Extensions</span>&gt;({
+</span></span><span style="display:flex;"><span>  orderUuid,
+</span></span><span style="display:flex;"><span>  extendKeys,
+</span></span><span style="display:flex;"><span>}<span style="color:#ff6ac1">:</span> GetOrderParams&lt;<span style="color:#ff6ac1">K</span>&gt;) <span style="color:#ff6ac1">=&gt;</span>
+</span></span><span style="display:flex;"><span>  httpClient.<span style="color:#ff6ac1">get</span>&lt;<span style="color:#ff6ac1">OrderResponse</span><span style="color:#ff5c57">&lt;</span><span style="color:#57c7ff">K</span>&gt;<span style="color:#ff6ac1">&gt;</span>(<span style="color:#5af78e">&#39;/api/order/detail&#39;</span>, {
+</span></span><span style="display:flex;"><span>    params<span style="color:#ff6ac1">:</span> {
+</span></span><span style="display:flex;"><span>      orderUuid,
+</span></span><span style="display:flex;"><span>      ...(<span style="color:#ff6ac1">!</span>isEmpty(extendKeys) <span style="color:#ff6ac1">&amp;&amp;</span> { extendKeys: <span style="color:#9aedfe">extendKeys?.join</span>(<span style="color:#5af78e">&#39;,&#39;</span>) }),
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>  })
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">const</span> order <span style="color:#ff6ac1">=</span> getOrder({ orderUuid<span style="color:#ff6ac1">:</span> <span style="color:#5af78e">&#39;123&#39;</span>, extendKeys<span style="color:#ff6ac1">:</span> [<span style="color:#5af78e">&#39;user&#39;</span>, <span style="color:#5af78e">&#39;driver&#39;</span>] })
+</span></span><span style="display:flex;"><span>order.then(({ data }) <span style="color:#ff6ac1">=&gt;</span> {
+</span></span><span style="display:flex;"><span>  console.log(data.extensions.user.name)
+</span></span><span style="display:flex;"><span>  console.log(data.extensions.driver.phone)
+</span></span><span style="display:flex;"><span>})
+</span></span></code></pre></div><h3 id="5-number">
+  5. [number]
+</h3><p>使用索引访问类型可以获取元组或数组中元素的类型。</p>
+<div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-TypeScript" data-lang="TypeScript"><span style="display:flex;"><span><span style="color:#ff6ac1">type</span> Parent <span style="color:#ff6ac1">=</span> [<span style="color:#9aedfe">string</span>, <span style="color:#9aedfe">number</span>];
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">type</span> Child <span style="color:#ff6ac1">=</span> Parent[<span style="color:#9aedfe">number</span>]; <span style="color:#78787e">// string | number
+</span></span></span></code></pre></div><h3 id="6-infer">
+  6. infer
+</h3><p><code>infer</code> 用于在条件类型中和 <code>extends </code>结合引入一个变量，以推断某个类型。</p>
+<p>它在复杂类型操作中非常有用，特别是在处理函数返回值类型时。</p>
+<div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-TypeScript" data-lang="TypeScript"><span style="display:flex;"><span><span style="color:#ff6ac1">type</span> ReturnType&lt;<span style="color:#ff6ac1">T</span>&gt; <span style="color:#ff6ac1">=</span> T <span style="color:#ff6ac1">extends</span> (...args: <span style="color:#9aedfe">any</span>[]) <span style="color:#ff6ac1">=&gt;</span> <span style="color:#ff6ac1">infer</span> R <span style="color:#ff6ac1">?</span> R : <span style="color:#9aedfe">never</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">interface</span> OrderReportsProps {
+</span></span><span style="display:flex;"><span>  isDisplayLanguageDropdown: <span style="color:#9aedfe">boolean</span>;
+</span></span><span style="display:flex;"><span>  language: <span style="color:#9aedfe">ReturnType</span>&lt;<span style="color:#ff6ac1">typeof</span> <span style="color:#57c7ff">useLanguage</span>&gt;;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>可以实现和上面的 <code>[number]</code> 一样的功能</p>
+<div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-Typescript" data-lang="Typescript"><span style="display:flex;"><span><span style="color:#ff6ac1">type</span> Parent <span style="color:#ff6ac1">=</span> [<span style="color:#9aedfe">string</span>, <span style="color:#9aedfe">number</span>];
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">type</span> Flatten&lt;<span style="color:#ff6ac1">T</span>&gt; <span style="color:#ff6ac1">=</span> T <span style="color:#ff6ac1">extends</span> (<span style="color:#ff6ac1">infer</span> R)[] <span style="color:#ff6ac1">?</span> R : <span style="color:#9aedfe">T</span>;
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">type</span> Child <span style="color:#ff6ac1">=</span> Flatten&lt;<span style="color:#ff6ac1">Parent</span>&gt;; <span style="color:#78787e">// string | number
+</span></span></span></code></pre></div><p>也可以用于获取某个 filed 的值</p>
+<div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-TypeScript" data-lang="TypeScript"><span style="display:flex;"><span><span style="color:#ff6ac1">type</span> Action <span style="color:#ff6ac1">=</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">|</span> { action<span style="color:#ff6ac1">:</span> <span style="color:#5af78e">&#34;create&#34;</span>; item: <span style="color:#9aedfe">string</span> }
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">|</span> { action<span style="color:#ff6ac1">:</span> <span style="color:#5af78e">&#34;update&#34;</span>; itemId: <span style="color:#9aedfe">number</span>; newValue: <span style="color:#9aedfe">string</span> }
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">|</span> { action<span style="color:#ff6ac1">:</span> <span style="color:#5af78e">&#34;delete&#34;</span>; itemId: <span style="color:#9aedfe">number</span> };
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">type</span> GetActionValue&lt;<span style="color:#ff6ac1">T</span>&gt; <span style="color:#ff6ac1">=</span> T <span style="color:#ff6ac1">extends</span> { action: <span style="color:#9aedfe">infer</span> U } <span style="color:#ff6ac1">?</span> U : <span style="color:#9aedfe">never</span>;
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">type</span> Value <span style="color:#ff6ac1">=</span> GetActionValue&lt;<span style="color:#ff6ac1">Action</span>&gt;; <span style="color:#78787e">// &#34;create&#34; | &#34;update&#34; | &#34;delete&#34;
+</span></span></span></code></pre></div><h3 id="7-递归">
+  7. 递归
+</h3><p>是的，类型也可以使用递归 ! 有很多有趣的玩法。</p>
+<p>但要注意，只有 <code>type</code> 创造的类型才可以进行递归，<code>interface</code> 的不可以</p>
+<div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-TypeScript" data-lang="TypeScript"><span style="display:flex;"><span><span style="color:#ff6ac1">type</span> Test <span style="color:#ff6ac1">=</span> <span style="color:#5af78e">&#34;123&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">type</span> StrintToUnion&lt;<span style="color:#ff6ac1">T</span> <span style="color:#57c7ff">extends</span> <span style="color:#57c7ff">string</span>&gt; <span style="color:#ff6ac1">=</span> T <span style="color:#ff6ac1">extends</span> <span style="color:#5af78e">`</span><span style="color:#5af78e">${</span><span style="color:#ff6ac1">infer</span> Letter <span style="color:#5af78e">}${</span><span style="color:#ff6ac1">infer</span> Rest<span style="color:#5af78e">}</span><span style="color:#5af78e">`</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">?</span> Letter <span style="color:#ff6ac1">|</span> StrintToUnion&lt;<span style="color:#ff6ac1">Rest</span>&gt;
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">:</span> <span style="color:#9aedfe">never</span>;
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">type</span> Result <span style="color:#ff6ac1">=</span> StringToUnion&lt;<span style="color:#ff6ac1">Test</span>&gt; <span style="color:#78787e">//  &#34;1&#34; | &#34;2&#34; | &#34;3&#34;
+</span></span></span></code></pre></div><p>假设我们想要拿到某个 nested 对象的 key 去更新，为了避免 typo ，就可以利用递归创建一个 key value 都等于这个 nested 对象所有 key 的类型。</p>
+<div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-TypeScript" data-lang="TypeScript"><span style="display:flex;"><span><span style="color:#ff6ac1">type</span> ObjectKeyPaths&lt;<span style="color:#ff6ac1">T</span><span style="color:#ff5c57">,</span> <span style="color:#57c7ff">K</span> <span style="color:#57c7ff">extends</span> <span style="color:#57c7ff">keyof</span> <span style="color:#57c7ff">T </span><span style="color:#ff6ac1">=</span> <span style="color:#57c7ff">keyof</span> <span style="color:#57c7ff">T</span>&gt; <span style="color:#ff6ac1">=</span> T <span style="color:#ff6ac1">extends</span> Record<span style="color:#ff6ac1">&lt;</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#9aedfe">string</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#9aedfe">unknown</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">&gt;</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">?</span> K <span style="color:#ff6ac1">extends</span> <span style="color:#9aedfe">string</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#ff6ac1">?</span> <span style="color:#5af78e">`</span><span style="color:#5af78e">${</span>K<span style="color:#5af78e">}${</span><span style="color:#5af78e">&#39;&#39;</span> <span style="color:#ff6ac1">|</span> <span style="color:#5af78e">`</span><span style="color:#5af78e">${</span><span style="color:#5af78e">&#39;.&#39;</span><span style="color:#5af78e">}${</span>ObjectKeyPaths&lt;<span style="color:#ff6ac1">T</span><span style="color:#ff5c57">[</span><span style="color:#57c7ff">K</span><span style="color:#ff5c57">]</span>&gt;<span style="color:#5af78e">}</span><span style="color:#5af78e">`</span><span style="color:#5af78e">}</span><span style="color:#5af78e">`</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#ff6ac1">:</span> <span style="color:#9aedfe">never</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">:</span> <span style="color:#9aedfe">never</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">type</span> Paths <span style="color:#ff6ac1">=</span> ObjectKeyPaths<span style="color:#ff6ac1">&lt;</span>{
+</span></span><span style="display:flex;"><span>  foo<span style="color:#ff6ac1">:</span> {
+</span></span><span style="display:flex;"><span>    bar<span style="color:#ff6ac1">:</span> {
+</span></span><span style="display:flex;"><span>      baz: <span style="color:#9aedfe">number</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>  arr: <span style="color:#9aedfe">number</span>[]
+</span></span><span style="display:flex;"><span>}<span style="color:#ff6ac1">&gt;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">const</span> pathsObj<span style="color:#ff6ac1">:</span> { [key <span style="color:#ff6ac1">in</span> Paths]<span style="color:#ff6ac1">:</span> key } <span style="color:#ff6ac1">=</span> {
+</span></span><span style="display:flex;"><span>  foo<span style="color:#ff6ac1">:</span> <span style="color:#5af78e">&#39;foo&#39;</span>,
+</span></span><span style="display:flex;"><span>  arr<span style="color:#ff6ac1">:</span> <span style="color:#5af78e">&#39;arr&#39;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#5af78e">&#39;foo.bar&#39;</span><span style="color:#ff6ac1">:</span> <span style="color:#5af78e">&#39;foo.bar&#39;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#5af78e">&#39;foo.bar.baz&#39;</span><span style="color:#ff6ac1">:</span> <span style="color:#5af78e">&#39;foo.bar.baz&#39;</span>,
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="更多">
+  更多
+</h2><p>TypeScript 其实有很多 fancy 的写法，我也是从这个 <a href="https://github.com/type-challenges/type-challenges">repo</a> 学了不少感兴趣的小伙伴可以多刷刷来更好地了解 TS 的类型系统 ～</p>
+        </div>
+
+    </article>
+
+    
+    
+
+    
+        
+        
+    
+
+    
+
+    
+        
+
+
+
+
+
+
+
+
+
+    
+
+    
+
+    
+
+        </main>
+        
+            <footer class="common-footer noselect">
+    
+    
+        <ul class="language-select">
+    
+    
+    
+
+    
+        
+            <li><a href="/posts/advance-typescript/">English</a></li>
+        
+    
+        
+            <li>中文</li>
+        
+    
+</ul>
+
+    
+
+    <div class="common-footer-bottom">
+        
+
+        <div style="display: flex; align-items: center; gap:8px">
+            ©  Yiqi,  2024
+            
+        </div>
+        <div style="display:flex;align-items: center">
+            
+            
+            
+            
+            
+            
+        </div>
+        <div>
+            Powered by <a target="_blank" rel="noopener noreferrer" href="https://gohugo.io/">Hugo</a>, theme <a target="_blank" rel="noopener noreferrer" href="https://github.com/Junyi-99/hugo-theme-anubis2">Anubis2</a>.<br>
+            
+
+        </div>
+    </div>
+
+    <p class="h-card vcard">
+
+    <a href=http://localhost:1313/ class="p-name u-url url fn" rel="me">map[email:halfseteamedbun@gmail.com location:Mainland China name:Yiqi]</a>
+
+    
+
+    
+</p>
+
+</footer>
+
+        
+    </div>
+</body>
+</html>

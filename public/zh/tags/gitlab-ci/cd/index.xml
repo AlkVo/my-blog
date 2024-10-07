@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>GitLab CI/CD on Yiqi&#39;s blog</title>
+    <link>/zh/tags/gitlab-ci/cd/</link>
+    <description>Yiqi&#39;s blog (GitLab CI/CD)</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh</language>
+    
+      
+        <managingEditor>halfseteamedbun@gmail.com
+          
+            (Yiqi)
+          
+        </managingEditor>
+      
+
+      
+    
+
+    
+    <lastBuildDate>Sat, 18 May 2024 00:00:00 +0000</lastBuildDate>
+    
+    <atom:link href="/zh/tags/gitlab-ci/cd/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>使用 GitLab CI 自动合并 master 分支代码到其他分支</title>
+      <link>/zh/posts/auto-merge/</link>
+      <pubDate>Sat, 18 May 2024 00:00:00 +0000</pubDate>
+      <author>halfseteamedbun@gmail.com (Yiqi)</author>
+      <guid>/zh/posts/auto-merge/</guid>
+      <description>&lt;h2 id=&#34;背景&#34;&gt;
+  背景
+&lt;/h2&gt;&lt;p&gt;在我们的开发流程中，要求在发布代码合并到 &lt;code&gt;master&lt;/code&gt; 分支后，&lt;code&gt;stg&lt;/code&gt; 和 &lt;code&gt;pre&lt;/code&gt; 分支也必须包含最新的 &lt;code&gt;master&lt;/code&gt; 代码。&lt;/p&gt;
+&lt;p&gt;为此，公司设置了一个机器人（bot）来比较 commit 差异。如果在发布代码合并到 &lt;code&gt;master&lt;/code&gt; 分支一天后，&lt;code&gt;stg&lt;/code&gt; 和 &lt;code&gt;pre&lt;/code&gt; 分支仍未更新，团队收到提醒。&lt;/p&gt;
+&lt;p&gt;然而，团队成员经常忘记手动执行这个合并操作，导致频繁的提醒，影响了工作效率。&lt;/p&gt;
+&lt;h2 id=&#34;解决方案&#34;&gt;
+  解决方案
+&lt;/h2&gt;&lt;p&gt;为了自动化这一流程，避免人为疏忽，我编写了一个 GitLab CI 脚本，一旦 &lt;code&gt;master&lt;/code&gt; 分支的代码发生变动：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;自动合并&lt;/strong&gt;：将 &lt;code&gt;master&lt;/code&gt; 分支的代码自动合并到 &lt;code&gt;stg&lt;/code&gt; 和 &lt;code&gt;pre&lt;/code&gt; 分支。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;异常处理&lt;/strong&gt;：如果合并过程中出现冲突，导致合并失败，脚本会自动创建一个 Merge Request（MR），提醒开发者及时处理。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;下面详细介绍该脚本的实现过程。&lt;/p&gt;
+&lt;h2 id=&#34;实现步骤&#34;&gt;
+  实现步骤
+&lt;/h2&gt;&lt;h3 id=&#34;1-添加新的阶段-merge&#34;&gt;
+  1. 添加新的阶段 &lt;code&gt;merge&lt;/code&gt;
+&lt;/h3&gt;&lt;p&gt;在 GitLab CI/CD 中，&lt;code&gt;stages&lt;/code&gt; 用于定义流水线中的各个阶段。GitLab Runner 会按照 &lt;code&gt;stages&lt;/code&gt; 中定义的顺序依次执行任务。&lt;/p&gt;
+&lt;p&gt;首先，在 &lt;code&gt;.gitlab-ci.yml&lt;/code&gt; 文件中添加一个新的阶段 &lt;code&gt;merge&lt;/code&gt;：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-yaml&#34; data-lang=&#34;yaml&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff6ac1&#34;&gt;stages&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - merge
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h3 id=&#34;2-添加-merge-to-stg-任务&#34;&gt;
+  2. 添加 &lt;code&gt;merge-to-stg&lt;/code&gt; 任务
+&lt;/h3&gt;&lt;p&gt;定义一个名为 &lt;code&gt;merge-to-stg&lt;/code&gt; 的任务，用于将 &lt;code&gt;master&lt;/code&gt; 分支的代码合并到 &lt;code&gt;stg&lt;/code&gt; 分支。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-yaml&#34; data-lang=&#34;yaml&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff6ac1&#34;&gt;merge-to-stg&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff6ac1&#34;&gt;stage&lt;/span&gt;: merge
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff6ac1&#34;&gt;allow_failure&lt;/span&gt;: &lt;span style=&#34;color:#ff6ac1&#34;&gt;true&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff6ac1&#34;&gt;only&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff6ac1&#34;&gt;refs&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      - master
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;strong&gt;配置说明：&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;stage: merge&lt;/code&gt;：指定该任务属于 &lt;code&gt;merge&lt;/code&gt; 阶段，确保其在正确的阶段执行。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;allow_failure: true&lt;/code&gt;：允许任务失败而不影响整个流水线的状态。即使合并过程中出现冲突，其他任务仍可继续执行，不会被阻塞。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;only&lt;/code&gt;：
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;refs: - master&lt;/code&gt;：仅在推送到 &lt;code&gt;master&lt;/code&gt; 分支时触发该任务，避免在其他分支上执行不必要的操作。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;3-编写合并脚本&#34;&gt;
+  3. 编写合并脚本
+&lt;/h3&gt;&lt;h4 id=&#34;31-配置-git-用户信息并获取最新代码&#34;&gt;
+  3.1 配置 Git 用户信息并获取最新代码
+&lt;/h4&gt;&lt;p&gt;在 &lt;code&gt;script&lt;/code&gt; 中，首先配置 Git 用户信息，并获取远程仓库的最新代码。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-yaml&#34; data-lang=&#34;yaml&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff6ac1&#34;&gt;script&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - git config --global user.email &amp;#34;$GITLAB_USER_EMAIL&amp;#34;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - git config --global user.name &amp;#34;$GITLAB_USER_LOGIN&amp;#34;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - git fetch origin
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;strong&gt;说明：&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;配置 Git 用户信息&lt;/strong&gt;：使用环境变量 &lt;code&gt;$GITLAB_USER_EMAIL&lt;/code&gt; 和 &lt;code&gt;$GITLAB_USER_LOGIN&lt;/code&gt; 设置 Git 用户的邮箱和用户名。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;获取远程代码&lt;/strong&gt;：&lt;code&gt;git fetch origin&lt;/code&gt; 获取远程仓库的最新提交信息。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;32-切换到目标分支&#34;&gt;
+  3.2 切换到目标分支
+&lt;/h4&gt;&lt;p&gt;切换到需要合并代码的目标分支 &lt;code&gt;stg&lt;/code&gt;：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-yaml&#34; data-lang=&#34;yaml&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff6ac1&#34;&gt;script&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - git checkout stg
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;33-执行合并并记录状态&#34;&gt;
+  3.3 执行合并并记录状态
+&lt;/h4&gt;&lt;p&gt;执行合并操作，将 &lt;code&gt;master&lt;/code&gt; 分支的代码合并到当前分支，并推送到远程仓库。然后记录合并状态。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-yaml&#34; data-lang=&#34;yaml&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff6ac1&#34;&gt;script&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - git merge origin/$CI_COMMIT_REF_NAME
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - git push https://oauth2:$PROJECT_ACCESS_TOKEN@$CI_SERVER_HOST/$CI_PROJECT_PATH.git
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - echo &amp;#34;SUCCESS&amp;#34; &amp;gt; .job_status
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;strong&gt;说明：&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;合并代码&lt;/strong&gt;：&lt;code&gt;git merge origin/$CI_COMMIT_REF_NAME&lt;/code&gt; 将 &lt;code&gt;origin/master&lt;/code&gt; 分支的代码合并到当前分支。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;推送代码&lt;/strong&gt;：使用项目访问令牌将合并后的代码推送到远程仓库（请确保在项目中设置了 &lt;code&gt;$PROJECT_ACCESS_TOKEN&lt;/code&gt; 环境变量）。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;记录状态&lt;/strong&gt;：&lt;code&gt;echo &amp;quot;SUCCESS&amp;quot; &amp;gt; .job_status&lt;/code&gt; 将合并成功的状态记录到 &lt;code&gt;.job_status&lt;/code&gt; 文件中。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;34-在任务完成后检查合并状态&#34;&gt;
+  3.4 在任务完成后检查合并状态
+&lt;/h4&gt;&lt;p&gt;使用 &lt;code&gt;after_script&lt;/code&gt; 定义在任务执行结束后需要执行的命令，检查合并是否成功，并在失败时采取相应措施。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-yaml&#34; data-lang=&#34;yaml&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff6ac1&#34;&gt;after_script&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - job_status=$(cat .job_status 2&amp;gt;/dev/null || echo &amp;#34;FAILED&amp;#34;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - current_branch=$(git rev-parse --abbrev-ref HEAD)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - |&lt;span style=&#34;color:#5af78e&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;    if [ &amp;#34;$job_status&amp;#34; == &amp;#39;SUCCESS&amp;#39; ]; then
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;      echo &amp;#34;Merge to $current_branch succeeded.&amp;#34;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;    else
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;      echo &amp;#34;Merge to $current_branch failed.&amp;#34;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;      curl --request POST --header &amp;#34;PRIVATE-TOKEN:$PROJECT_ACCESS_TOKEN&amp;#34; \
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;      --data &amp;#34;source_branch=$CI_COMMIT_REF_NAME&amp;amp;target_branch=$current_branch&amp;amp;title=Auto merge $CI_COMMIT_REF_NAME to $current_branch&amp;#34; \
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;      &amp;#34;https://$CI_SERVER_HOST/api/v4/projects/$CI_PROJECT_ID/merge_requests&amp;#34;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;    fi&lt;/span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;strong&gt;说明：&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;检查合并状态&lt;/strong&gt;：读取 &lt;code&gt;.job_status&lt;/code&gt; 文件，如果不存在则视为合并失败。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;根据状态执行操作&lt;/strong&gt;：
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;成功&lt;/strong&gt;：输出成功信息。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;失败&lt;/strong&gt;：输出失败信息，并通过 GitLab API 创建一个 MR，提醒相关人员处理。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;4-提取公共脚本片段以减少重复&#34;&gt;
+  4. 提取公共脚本片段以减少重复
+&lt;/h3&gt;&lt;p&gt;由于需要对多个分支执行相同的操作，为了提高配置文件的可维护性，我们使用 YAML 的锚点（&lt;code&gt;&amp;amp;&lt;/code&gt;）和别名（&lt;code&gt;*&lt;/code&gt;）来提取公共的脚本片段。&lt;/p&gt;
+&lt;h4 id=&#34;41-定义公共脚本片段&#34;&gt;
+  4.1 定义公共脚本片段
+&lt;/h4&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-yaml&#34; data-lang=&#34;yaml&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff6ac1&#34;&gt;.fetch_script&lt;/span&gt;: &lt;span style=&#34;color:#78787e&#34;&gt;&amp;amp;fetch_script&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - git config --global user.email &amp;#34;$GITLAB_USER_EMAIL&amp;#34;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - git config --global user.name &amp;#34;$GITLAB_USER_LOGIN&amp;#34;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - git fetch origin
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff6ac1&#34;&gt;.merge_script&lt;/span&gt;: &lt;span style=&#34;color:#78787e&#34;&gt;&amp;amp;merge_script&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - git merge origin/$CI_COMMIT_REF_NAME
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - git push https://oauth2:$PROJECT_ACCESS_TOKEN@$CI_SERVER_HOST/$CI_PROJECT_PATH.git
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - echo &amp;#34;SUCCESS&amp;#34; &amp;gt; .job_status
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff6ac1&#34;&gt;.check_status_script&lt;/span&gt;: &lt;span style=&#34;color:#78787e&#34;&gt;&amp;amp;check_status_script&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - job_status=$(cat .job_status 2&amp;gt;/dev/null || echo &amp;#34;FAILED&amp;#34;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - current_branch=$(git rev-parse --abbrev-ref HEAD)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - |&lt;span style=&#34;color:#5af78e&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;    if [ &amp;#34;$job_status&amp;#34; == &amp;#39;SUCCESS&amp;#39; ]; then
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;      echo &amp;#34;Merge to $current_branch succeeded.&amp;#34;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;    else
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;      echo &amp;#34;Merge to $current_branch failed.&amp;#34;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;      curl --request POST --header &amp;#34;PRIVATE-TOKEN:$PROJECT_ACCESS_TOKEN&amp;#34; \
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;      --data &amp;#34;source_branch=$CI_COMMIT_REF_NAME&amp;amp;target_branch=$current_branch&amp;amp;title=Auto merge $CI_COMMIT_REF_NAME to $current_branch&amp;#34; \
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;      &amp;#34;https://$CI_SERVER_HOST/api/v4/projects/$CI_PROJECT_ID/merge_requests&amp;#34;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;    fi&lt;/span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;42-在任务中引用公共脚本&#34;&gt;
+  4.2 在任务中引用公共脚本
+&lt;/h4&gt;&lt;p&gt;在刚刚的&lt;code&gt;merge-to-stg&lt;/code&gt;任务中，修改为使用 &lt;code&gt;*script_name&lt;/code&gt; 引用预先定义的脚本片段&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-yaml&#34; data-lang=&#34;yaml&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff6ac1&#34;&gt;merge-to-stg&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff6ac1&#34;&gt;stage&lt;/span&gt;: merge
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff6ac1&#34;&gt;allow_failure&lt;/span&gt;: &lt;span style=&#34;color:#ff6ac1&#34;&gt;true&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff6ac1&#34;&gt;script&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    - &lt;span style=&#34;color:#78787e&#34;&gt;*fetch_script&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    - git checkout stg
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    - &lt;span style=&#34;color:#78787e&#34;&gt;*merge_script&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff6ac1&#34;&gt;after_script&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    - &lt;span style=&#34;color:#78787e&#34;&gt;*check_status_script&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff6ac1&#34;&gt;only&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff6ac1&#34;&gt;refs&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      - master
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;同样，可以这么编写 &lt;code&gt;merge-to-pre&lt;/code&gt; 任务，将代码合并到 &lt;code&gt;pre&lt;/code&gt; 分支，避免重复编写相同的代码。&lt;/p&gt;
+&lt;h3 id=&#34;5-完整的-gitlab-ciyml-文件&#34;&gt;
+  5. 完整的 &lt;code&gt;.gitlab-ci.yml&lt;/code&gt; 文件
+&lt;/h3&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-yaml&#34; data-lang=&#34;yaml&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff6ac1&#34;&gt;image&lt;/span&gt;: your-docker-image
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff6ac1&#34;&gt;stages&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - merge
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff6ac1&#34;&gt;.fetch_script&lt;/span&gt;: &lt;span style=&#34;color:#78787e&#34;&gt;&amp;amp;fetch_script&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - git config --global user.email &amp;#34;$GITLAB_USER_EMAIL&amp;#34;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - git config --global user.name &amp;#34;$GITLAB_USER_LOGIN&amp;#34;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - git fetch origin
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff6ac1&#34;&gt;.merge_script&lt;/span&gt;: &lt;span style=&#34;color:#78787e&#34;&gt;&amp;amp;merge_script&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - git merge origin/$CI_COMMIT_REF_NAME
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - git push https://oauth2:$PROJECT_ACCESS_TOKEN@$CI_SERVER_HOST/$CI_PROJECT_PATH.git
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - echo &amp;#34;SUCCESS&amp;#34; &amp;gt; .job_status
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff6ac1&#34;&gt;.check_status_script&lt;/span&gt;: &lt;span style=&#34;color:#78787e&#34;&gt;&amp;amp;check_status_script&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - job_status=$(cat .job_status 2&amp;gt;/dev/null || echo &amp;#34;FAILED&amp;#34;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - current_branch=$(git rev-parse --abbrev-ref HEAD)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - |&lt;span style=&#34;color:#5af78e&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;    if [ &amp;#34;$job_status&amp;#34; == &amp;#39;SUCCESS&amp;#39; ]; then
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;      echo &amp;#34;Merge to $current_branch succeeded.&amp;#34;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;    else
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;      echo &amp;#34;Merge to $current_branch failed.&amp;#34;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;      curl --request POST --header &amp;#34;PRIVATE-TOKEN:$PROJECT_ACCESS_TOKEN&amp;#34; \
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;      --data &amp;#34;source_branch=$CI_COMMIT_REF_NAME&amp;amp;target_branch=$current_branch&amp;amp;title=Auto merge $CI_COMMIT_REF_NAME to $current_branch&amp;#34; \
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;      &amp;#34;https://$CI_SERVER_HOST/api/v4/projects/$CI_PROJECT_ID/merge_requests&amp;#34;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#5af78e&#34;&gt;    fi&lt;/span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff6ac1&#34;&gt;merge-to-stg&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff6ac1&#34;&gt;stage&lt;/span&gt;: merge
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff6ac1&#34;&gt;allow_failure&lt;/span&gt;: &lt;span style=&#34;color:#ff6ac1&#34;&gt;true&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff6ac1&#34;&gt;script&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    - &lt;span style=&#34;color:#78787e&#34;&gt;*fetch_script&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    - git checkout stg
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    - &lt;span style=&#34;color:#78787e&#34;&gt;*merge_script&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff6ac1&#34;&gt;after_script&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    - &lt;span style=&#34;color:#78787e&#34;&gt;*check_status_script&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff6ac1&#34;&gt;only&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff6ac1&#34;&gt;refs&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      - master
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff6ac1&#34;&gt;merge-to-pre&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff6ac1&#34;&gt;stage&lt;/span&gt;: merge
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff6ac1&#34;&gt;allow_failure&lt;/span&gt;: &lt;span style=&#34;color:#ff6ac1&#34;&gt;true&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff6ac1&#34;&gt;script&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    - &lt;span style=&#34;color:#78787e&#34;&gt;*fetch_script&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    - git checkout pre
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    - &lt;span style=&#34;color:#78787e&#34;&gt;*merge_script&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff6ac1&#34;&gt;after_script&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    - &lt;span style=&#34;color:#78787e&#34;&gt;*check_status_script&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff6ac1&#34;&gt;only&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff6ac1&#34;&gt;refs&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      - master
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id=&#34;总结&#34;&gt;
+  总结
+&lt;/h2&gt;&lt;p&gt;通过以上配置，我们实现了 &lt;code&gt;master&lt;/code&gt; 分支有任何变更后，自动将其合并到 &lt;code&gt;stg&lt;/code&gt; 和 &lt;code&gt;pre&lt;/code&gt; 分支的功能。即使合并过程中出现冲突，脚本也会自动创建 MR，提醒开发者及时处理。这种自动化方式有效地解决了团队成员忘记手动合并的问题，确保了代码在不同环境中的一致性，提高了工作效率。&lt;/p&gt;</description>
+    </item>
+    
+  </channel>
+</rss>

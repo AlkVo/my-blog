@@ -1,0 +1,54 @@
+baseURL = 'https://mellow-paprenjak-b22327.netlify.app/'
+languageCode = 'en'
+theme = "anubis2"
+title = "Yiqi's blog"
+
+
+[params.author]
+name = "Yiqi"
+email  = "halfseteamedbun@gmail.com"
+location = "Mainland China"
+
+
+[languages]
+  [languages.en]
+    languageName="English"
+    weight = 1
+    contentDir = "content/en"
+  
+   [languages.zh]
+    languageName="中文"
+    weight = 2
+    contentDir = "content/zh"
+
+
+ 
+[markup.goldmark.renderer]
+unsafe = true # true | false; Enable unsafe mode to have a better experience
+
+[markup.highlight]
+style = 'base16-snazzy' # Highlight.js style
+
+[params]
+rssAsSocialIcon = false
+toc = false
+
+[[menu.main]]
+identifier = "home"
+name = "Home"
+url = "/"
+weight = 1
+
+[[menu.main]]
+identifier = "about"
+name = "About"
+url = "/about/"
+weight = 2
+
+[[menu.main]]
+identifier = "tags"
+name = "Tags"
+url = "/tags/"
+weight = 3
+
+ 
