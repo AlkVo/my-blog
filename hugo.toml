@@ -1,4 +1,4 @@
-baseURL = 'https://mellow-paprenjak-b22327.netlify.app/'
+baseURL = 'https://yiqi-blog.netlify.app/'
 languageCode = 'en'
 theme = "anubis2"
 title = "Yiqi's blog"
