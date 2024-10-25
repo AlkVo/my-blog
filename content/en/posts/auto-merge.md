@@ -13,14 +13,14 @@ To ensure this, the company has set up a bot to compare commit differences. If, 
 
 However, team members often forget to manually perform this merge operation, leading to frequent reminders and impacting work efficiency.
 
+<!--more-->
+
 ## Solution
 
 To automate this process and avoid human oversight, I wrote a GitLab CI script that, once changes occur in the `master` branch:
 
 1. **Automatic Merge**: Automatically merges the code from the `master` branch into the `stg` and `pre` branches.
 2. **Exception Handling**: If conflicts occur during the merge process, causing the merge to fail, the script automatically creates a Merge Request (MR) to prompt developers to handle it promptly.
-
-<!--more-->
 
 Below is a detailed introduction to the implementation of the script.
 
