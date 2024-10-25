@@ -16,14 +16,7 @@
   Background
 In our development process, it is required that after the release code is merged into the master branch, the stg and pre branches must also contain the latest master code.
 To ensure this, the company has set up a bot to compare commit differences. If, one day after the release code has been merged into the master branch, the stg and pre branches have not been updated, the team receives a reminder.
-However, team members often forget to manually perform this merge operation, leading to frequent reminders and impacting work efficiency.
-
-  Solution
-To automate this process and avoid human oversight, I wrote a GitLab CI script that, once changes occur in the master branch:
-
-Automatic Merge: Automatically merges the code from the master branch into the stg and pre branches.
-Exception Handling: If conflicts occur during the merge process, causing the merge to fail, the script automatically creates a Merge Request (MR) to prompt developers to handle it promptly.
-">
+However, team members often forget to manually perform this merge operation, leading to frequent reminders and impacting work efficiency.">
 
 
 

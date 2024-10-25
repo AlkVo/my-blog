@@ -370,13 +370,6 @@
 </h2><p>在我们的开发流程中，要求在发布代码合并到 <code>master</code> 分支后，<code>stg</code> 和 <code>pre</code> 分支也必须包含最新的 <code>master</code> 代码。</p>
 <p>为此，公司设置了一个机器人（bot）来比较 commit 差异。如果在发布代码合并到 <code>master</code> 分支一天后，<code>stg</code> 和 <code>pre</code> 分支仍未更新，团队收到提醒。</p>
 <p>然而，团队成员经常忘记手动执行这个合并操作，导致频繁的提醒，影响了工作效率。</p>
-<h2 id="解决方案">
-  解决方案
-</h2><p>为了自动化这一流程，避免人为疏忽，我编写了一个 GitLab CI 脚本，一旦 <code>master</code> 分支的代码发生变动：</p>
-<ol>
-<li><strong>自动合并</strong>：将 <code>master</code> 分支的代码自动合并到 <code>stg</code> 和 <code>pre</code> 分支。</li>
-<li><strong>异常处理</strong>：如果合并过程中出现冲突，导致合并失败，脚本会自动创建一个 Merge Request（MR），提醒开发者及时处理。</li>
-</ol>
         </div>
     
 
@@ -497,6 +490,90 @@
                 
                     
                     <li><a href="/zh/tags/typescript/">#TypeScript</a></li>
+                
+            </ul>
+        
+        
+    </div>
+</div>
+
+</article>
+
+        
+            <article class="post-list h-feed post-card">
+    <div class="post-header">
+        <header>
+            
+            
+            
+            <h1 class="p-name post-title ">
+                <a class="u-url" href="/zh/posts/react-shared-components-compound-pattern-journey/">从 Props Hell 到 Compound Pattern：该如何设计公共的 React 组件库</a>
+            </h1>
+        </header>
+        
+    
+    <span>
+        <ul class="post-translations">
+            
+                
+                    <li>
+                        <a href="/posts/react-shared-components-compound-pattern-journey/">EN</a>
+                    </li>
+                
+            
+                
+                    <li>
+                        ZH
+                    </li>
+                
+            
+        </ul>
+    </span>
+
+
+    </div>
+
+    
+        <div class="content post-summary p-summary">
+            <h2 id="背景">
+  背景
+</h2><h3 id="props-hell-的产生">
+  Props Hell 的产生
+</h3><p>在封装公共组件库时，我们常常会遇到一个问题：初始设计看似合理，但随着项目开发的深入，UI 需求不断变化，组件的逻辑和 props 变得愈加复杂。</p>
+        </div>
+    
+
+    
+
+    
+
+
+
+<div class="post-info noselect">
+    
+        <div class="post-date dt-published">
+            <time datetime="2024-01-11">2024-01-11</time>
+            
+        </div>
+    
+
+    <a class="post-hidden-url u-url" href="/zh/posts/react-shared-components-compound-pattern-journey/">/zh/posts/react-shared-components-compound-pattern-journey/</a>
+    <a href="http://localhost:1313/" class="p-name p-author post-hidden-author h-card" rel="me">map[email:halfseteamedbun@gmail.com location:Mainland China name:Yiqi]</a>
+
+
+    <div class="post-taxonomies">
+        
+        
+            <ul class="post-tags">
+                
+                    
+                    <li><a href="/zh/tags/react/">#React</a></li>
+                
+                    
+                    <li><a href="/zh/tags/patterns/">#Patterns</a></li>
+                
+                    
+                    <li><a href="/zh/tags/fe/">#FE</a></li>
                 
             </ul>
         

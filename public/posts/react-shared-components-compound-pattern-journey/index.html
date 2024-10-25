@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+
+
+<html lang="en" data-theme="">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+    
+        
+<meta charset="utf-8">
+<meta name="HandheldFriendly" content="True">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="referrer" content="no-referrer-when-downgrade">
+
+<title>From Props Hell to the Compound Pattern: How to Design a Common React Component Library - Yiqi&rsquo;s blog</title>
+
+<meta name="description" content="
+  Background
+
+  The Emergence of Props Hell
+When encapsulating a common component library, we often encounter a problem: the initial design seems reasonable, but as the project development progresses and UI requirements continuously change, the component&rsquo;s logic and props become increasingly complex.">
+
+
+
+
+
+<link rel="icon" type="image/x-icon" href="http://localhost:1313/favicon.ico">
+<link rel="apple-touch-icon-precomposed" href="http://localhost:1313/favicon.png">
+
+
+
+
+
+
+
+
+    
+
+
+
+<style>
+  body {
+    visibility: hidden;
+    opacity: 0;
+  }
+</style>
+
+<noscript>
+  <style>
+    body {
+      visibility: visible;
+      opacity: 1;
+    }
+  </style>
+</noscript>
+
+
+
+
+    
+
+
+
+
+
+    
+    
+    
+
+    
+        <link rel="stylesheet" href="/css/style.03df79c682b91915c7cd261ecd1a6ec4d0fe668c98fa46310d0fbade319b11bd.css" integrity="sha256-A995xoK5GRXHzSYezRpuxND&#43;ZoyY&#43;kYxDQ&#43;63jGbEb0=">
+    
+
+
+
+
+
+    
+
+
+
+
+
+    
+    
+    
+
+    
+        <link rel="stylesheet" href="/css/style.9c1888ebff42c0224ce04dac10cb2c401f1b77f54f78e8d87d73c3bed781c263.css" integrity="sha256-nBiI6/9CwCJM4E2sEMssQB8bd/VPeOjYfXPDvteBwmM=">
+    
+
+
+
+
+
+    
+
+
+
+
+
+    
+    
+    
+
+    
+        <link rel="stylesheet" href="/css/style.acd606c0fce58853afe0248d37bb41acbbcdd8b1aca2412b6c0fa760da0137f3.css" integrity="sha256-rNYGwPzliFOv4CSNN7tBrLvN2LGsokErbA&#43;nYNoBN/M=">
+    
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
+    
+
+
+
+
+
+    
+    
+    
+
+    
+        <script src="/js/script.672e2309c296e07c18bcd08b28d797a56222ff941d65f308fba3158c44885b14.js" type="text/javascript" charset="utf-8" integrity="sha256-Zy4jCcKW4HwYvNCLKNeXpWIi/5QdZfMI&#43;6MVjESIWxQ="></script>
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+</head>
+<body>
+    <a class="skip-main" href="#main">Skip to main content</a>
+    <div class="container">
+        <header class="common-header">
+            
+                <div class="header-top">
+    <div class="header-top-left">
+        <h1 class="site-title noselect">
+    <a href="/">Yiqi&#39;s blog</a>
+</h1>
+
+        
+
+
+
+
+
+
+
+    
+        <div class="theme-switcher">
+            <span class="inline-svg">
+
+    
+
+
+    
+    
+    
+    
+    
+
+    <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-sun-high"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14.828 14.828a4 4 0 1 0 -5.656 -5.656a4 4 0 0 0 5.656 5.656z" /><path d="M6.343 17.657l-1.414 1.414" /><path d="M6.343 6.343l-1.414 -1.414" /><path d="M17.657 6.343l1.414 -1.414" /><path d="M17.657 17.657l1.414 1.414" /><path d="M4 12h-2" /><path d="M12 4v-2" /><path d="M20 12h2" /><path d="M12 20v2" /></svg>
+
+
+</span>
+
+        </div>
+    
+
+    <script>
+        const STORAGE_KEY = 'user-color-scheme'
+        const defaultTheme = "light"
+
+        let currentTheme
+        let switchButton
+        let autoDefinedScheme = window.matchMedia('(prefers-color-scheme: dark)')
+
+        function switchTheme(e) {
+            currentTheme = (currentTheme === 'dark') ? 'light' : 'dark';
+            if (localStorage) localStorage.setItem(STORAGE_KEY, currentTheme);
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            changeGiscusTheme(currentTheme);
+            document.body.dispatchEvent(new CustomEvent(currentTheme + "-theme-set"));
+        }
+
+        const autoChangeScheme = e => {
+            currentTheme = e.matches ? 'dark' : 'light'
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            changeGiscusTheme(currentTheme);
+            document.body.dispatchEvent(new CustomEvent(currentTheme + "-theme-set"));
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            switchButton = document.querySelector('.theme-switcher')
+            currentTheme = detectCurrentScheme()
+
+            if (currentTheme === 'auto') {
+                autoChangeScheme(autoDefinedScheme);
+                autoDefinedScheme.addListener(autoChangeScheme);
+            } else {
+                document.documentElement.setAttribute('data-theme', currentTheme)
+            }
+
+            if (switchButton) {
+                switchButton.addEventListener('click', switchTheme, false)
+            }
+
+            showContent();
+        })
+
+        function detectCurrentScheme() {
+            if (localStorage !== null && localStorage.getItem(STORAGE_KEY)) {
+                return localStorage.getItem(STORAGE_KEY)
+            }
+            if (defaultTheme) {
+                return defaultTheme
+            }
+            return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+
+        function showContent() {
+            document.body.style.visibility = 'visible';
+            document.body.style.opacity = 1;
+        }
+
+        function changeGiscusTheme (theme) {
+            function sendMessage(message) {
+              const iframe = document.querySelector('iframe.giscus-frame');
+              if (!iframe) return;
+              iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+            }
+
+            sendMessage({
+              setConfig: {
+                theme: theme
+              }
+            });
+        }
+    </script>
+
+
+        <ul class="social-icons noselect">
+
+
+
+
+
+
+
+    <li>
+            <a href="/index.xml" title="RSS" rel="me">
+            <span class="inline-svg">
+
+    
+
+
+    
+    
+    
+    
+    
+
+    <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-rss"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 19m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M4 4a16 16 0 0 1 16 16" /><path d="M4 11a9 9 0 0 1 9 9" /></svg>
+
+
+</span>
+
+            </a>
+        </li>
+    
+
+</ul>
+
+    </div>
+    <div class="header-top-right">
+
+    </div>
+</div>
+
+
+    <nav class="noselect">
+        
+        
+        <a class="" href="http://localhost:1313/" title="">Home</a>
+        
+        <a class="" href="http://localhost:1313/about/" title="">About</a>
+        
+        <a class="" href="http://localhost:1313/tags/" title="">Tags</a>
+        
+    </nav>
+
+
+
+
+
+
+
+
+            
+        </header>
+        <main id="main" tabindex="-1">
+            
+    
+
+    <article class="post h-entry">
+        <div class="post-header">
+            <header>
+                <h1 class="p-name post-title">From Props Hell to the Compound Pattern: How to Design a Common React Component Library</h1>
+                
+    
+    <span>
+        <ul class="post-translations">
+            
+                
+                    <li>
+                        EN
+                    </li>
+                
+            
+                
+                    <li>
+                        <a href="/zh/posts/react-shared-components-compound-pattern-journey/">ZH</a>
+                    </li>
+                
+            
+        </ul>
+    </span>
+
+
+            </header>
+            
+
+
+
+<div class="post-info noselect">
+    
+        <div class="post-date dt-published">
+            <time datetime="2024-01-11">2024-01-11</time>
+            
+        </div>
+    
+
+    <a class="post-hidden-url u-url" href="/posts/react-shared-components-compound-pattern-journey/">/posts/react-shared-components-compound-pattern-journey/</a>
+    <a href="http://localhost:1313/" class="p-name p-author post-hidden-author h-card" rel="me">map[email:halfseteamedbun@gmail.com location:Mainland China name:Yiqi]</a>
+
+
+    <div class="post-taxonomies">
+        
+        
+            <ul class="post-tags">
+                
+                    
+                    <li><a href="/tags/react/">#React</a></li>
+                
+                    
+                    <li><a href="/tags/patterns/">#Patterns</a></li>
+                
+                    
+                    <li><a href="/tags/fe/">#FE</a></li>
+                
+            </ul>
+        
+        
+    </div>
+</div>
+
+        </div>
+        
+
+  
+  
+    
+  
+
+
+
+
+
+
+<script>
+  var toc = document.querySelector(".toc");
+  if (toc) {
+    toc.addEventListener("click", function () {
+      if (event.target.tagName !== "A") {
+        event.preventDefault();
+        if (this.open) {
+          this.open = false;
+          this.classList.remove("expanded");
+        } else {
+          this.open = true;
+          this.classList.add("expanded");
+        }
+      }
+    });
+  }
+</script>
+
+        <div class="content e-content">
+            <h2 id="background">
+  Background
+</h2><h3 id="the-emergence-of-props-hell">
+  The Emergence of Props Hell
+</h3><p>When encapsulating a common component library, we often encounter a problem: the initial design seems reasonable, but as the project development progresses and UI requirements continuously change, the component&rsquo;s logic and props become increasingly complex.</p>
+<p>For example, the initial component design only needed to display <code>title</code> and <code>description</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-tsx" data-lang="tsx"><span style="display:flex;"><span><span style="color:#ff6ac1">type</span> CardProps <span style="color:#ff6ac1">=</span> {
+</span></span><span style="display:flex;"><span>  title: <span style="color:#9aedfe">string</span>;
+</span></span><span style="display:flex;"><span>  description: <span style="color:#9aedfe">string</span>;
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">const</span> Card <span style="color:#ff6ac1">=</span> ({ title, description }<span style="color:#ff6ac1">:</span> CardProps) <span style="color:#ff6ac1">=&gt;</span> {
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">return</span> (
+</span></span><span style="display:flex;"><span>    &lt;<span style="color:#ff6ac1">div</span> <span style="color:#57c7ff">style</span><span style="color:#ff6ac1">=</span>{{ border<span style="color:#ff6ac1">:</span> <span style="color:#5af78e">&#34;1px solid black&#34;</span> }}&gt;
+</span></span><span style="display:flex;"><span>      &lt;<span style="color:#ff6ac1">h2</span>&gt;{title}&lt;/<span style="color:#ff6ac1">h2</span>&gt;
+</span></span><span style="display:flex;"><span>      &lt;<span style="color:#ff6ac1">p</span>&gt;{description}&lt;/<span style="color:#ff6ac1">p</span>&gt;
+</span></span><span style="display:flex;"><span>    &lt;/<span style="color:#ff6ac1">div</span>&gt;
+</span></span><span style="display:flex;"><span>  );
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#78787e">// Usage
+</span></span></span><span style="display:flex;"><span><span style="color:#78787e"></span>&lt;<span style="color:#ff6ac1">Card</span> <span style="color:#57c7ff">title</span><span style="color:#ff6ac1">=</span>{title} <span style="color:#57c7ff">description</span><span style="color:#ff6ac1">=</span>{description} /&gt;;
+</span></span></code></pre></div><p>But as the project progressed, the requirements changed—we needed to edit the card content in certain scenarios.</p>
+<p>So we needed to:</p>
+<ol>
+<li>Add an Edit Button.</li>
+<li>When the Edit Button is clicked, a dialog pops up to modify the <code>description</code>.</li>
+</ol>
+<p>To maintain compatibility with existing usage, we added two optional props: <code>isEditable</code> and <code>updateDescription</code>.</p>
+<div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-tsx" data-lang="tsx"><span style="display:flex;"><span><span style="color:#ff6ac1">type</span> CardProps <span style="color:#ff6ac1">=</span> {
+</span></span><span style="display:flex;"><span>  title: <span style="color:#9aedfe">string</span>;
+</span></span><span style="display:flex;"><span>  description: <span style="color:#9aedfe">string</span>;
+</span></span><span style="display:flex;"><span>  isEditable?: <span style="color:#9aedfe">boolean</span>;
+</span></span><span style="display:flex;"><span>  updateDescription<span style="color:#ff6ac1">?:</span> (newDescription: <span style="color:#9aedfe">string</span>) <span style="color:#ff6ac1">=&gt;</span> <span style="color:#ff6ac1">void</span>;
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">const</span> Card <span style="color:#ff6ac1">=</span> ({
+</span></span><span style="display:flex;"><span>  title,
+</span></span><span style="display:flex;"><span>  description,
+</span></span><span style="display:flex;"><span>  isEditable,
+</span></span><span style="display:flex;"><span>  updateDescription,
+</span></span><span style="display:flex;"><span>}<span style="color:#ff6ac1">:</span> CardProps) <span style="color:#ff6ac1">=&gt;</span> {
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">const</span> [isOpen, setIsOpen] <span style="color:#ff6ac1">=</span> useState(<span style="color:#ff6ac1">false</span>);
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">const</span> [newDescription, setNewDescription] <span style="color:#ff6ac1">=</span> useState(description);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">const</span> handleDescriptionChange <span style="color:#ff6ac1">=</span> (e: <span style="color:#9aedfe">React.ChangeEvent</span>&lt;<span style="color:#ff6ac1">HTMLInputElement</span>&gt;) <span style="color:#ff6ac1">=&gt;</span> {
+</span></span><span style="display:flex;"><span>    setNewDescription(e.target.value);
+</span></span><span style="display:flex;"><span>  };
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">const</span> handleConfirm <span style="color:#ff6ac1">=</span> () <span style="color:#ff6ac1">=&gt;</span> {
+</span></span><span style="display:flex;"><span>    updateDescription<span style="color:#ff6ac1">?</span>.(newDescription);
+</span></span><span style="display:flex;"><span>    setIsOpen(<span style="color:#ff6ac1">false</span>);
+</span></span><span style="display:flex;"><span>  };
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">return</span> (
+</span></span><span style="display:flex;"><span>    &lt;<span style="color:#ff6ac1">div</span> <span style="color:#57c7ff">style</span><span style="color:#ff6ac1">=</span>{{ border<span style="color:#ff6ac1">:</span> <span style="color:#5af78e">&#34;1px solid black&#34;</span> }}&gt;
+</span></span><span style="display:flex;"><span>      &lt;<span style="color:#ff6ac1">h2</span>&gt;{title}&lt;/<span style="color:#ff6ac1">h2</span>&gt;
+</span></span><span style="display:flex;"><span>      &lt;<span style="color:#ff6ac1">p</span>&gt;{description}&lt;/<span style="color:#ff6ac1">p</span>&gt;
+</span></span><span style="display:flex;"><span>      {isEditable <span style="color:#ff6ac1">&amp;&amp;</span> &lt;<span style="color:#ff6ac1">button</span> <span style="color:#57c7ff">onClick</span><span style="color:#ff6ac1">=</span>{() <span style="color:#ff6ac1">=&gt;</span> setIsOpen(<span style="color:#ff6ac1">true</span>)}&gt;Edit&lt;/<span style="color:#ff6ac1">button</span>&gt;}
+</span></span><span style="display:flex;"><span>      {isOpen <span style="color:#ff6ac1">&amp;&amp;</span> (
+</span></span><span style="display:flex;"><span>        &lt;<span style="color:#ff6ac1">dialog</span> <span style="color:#57c7ff">open</span>&gt;
+</span></span><span style="display:flex;"><span>          &lt;<span style="color:#ff6ac1">input</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#57c7ff">type</span><span style="color:#ff6ac1">=</span><span style="color:#5af78e">&#34;text&#34;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#57c7ff">value</span><span style="color:#ff6ac1">=</span>{newDescription}
+</span></span><span style="display:flex;"><span>            <span style="color:#57c7ff">onChange</span><span style="color:#ff6ac1">=</span>{handleDescriptionChange}
+</span></span><span style="display:flex;"><span>          /&gt;
+</span></span><span style="display:flex;"><span>          &lt;<span style="color:#ff6ac1">button</span> <span style="color:#57c7ff">onClick</span><span style="color:#ff6ac1">=</span>{handleConfirm}&gt;Confirm&lt;/<span style="color:#ff6ac1">button</span>&gt;
+</span></span><span style="display:flex;"><span>        &lt;/<span style="color:#ff6ac1">dialog</span>&gt;
+</span></span><span style="display:flex;"><span>      )}
+</span></span><span style="display:flex;"><span>    &lt;/<span style="color:#ff6ac1">div</span>&gt;
+</span></span><span style="display:flex;"><span>  );
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#78787e">// Usage
+</span></span></span><span style="display:flex;"><span><span style="color:#78787e"></span>&lt;<span style="color:#ff6ac1">Card</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#57c7ff">title</span><span style="color:#ff6ac1">=</span>{title}
+</span></span><span style="display:flex;"><span>  <span style="color:#57c7ff">description</span><span style="color:#ff6ac1">=</span>{description}
+</span></span><span style="display:flex;"><span>  <span style="color:#57c7ff">isEditable</span><span style="color:#ff6ac1">=</span>{<span style="color:#ff6ac1">true</span>}
+</span></span><span style="display:flex;"><span>  <span style="color:#57c7ff">updateDescription</span><span style="color:#ff6ac1">=</span>{updateDescription}
+</span></span><span style="display:flex;"><span>/&gt;;
+</span></span></code></pre></div><p>Later, after two more months, a new requirement came in: the description text of the popup dialog needs to be specified according to the scenario. So the <code>Card</code> component had to add another optional prop called <code>dialogDescription</code>.</p>
+<p>If we need to use other encapsulated components, we might even have to pass <code>props</code> layer by layer.</p>
+<div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-tsx" data-lang="tsx"><span style="display:flex;"><span><span style="color:#ff6ac1">const</span> Card <span style="color:#ff6ac1">=</span> ({
+</span></span><span style="display:flex;"><span>  title,
+</span></span><span style="display:flex;"><span>  description,
+</span></span><span style="display:flex;"><span>  isEditable,
+</span></span><span style="display:flex;"><span>  updateDescription,
+</span></span><span style="display:flex;"><span>  newProps1,
+</span></span><span style="display:flex;"><span>  newProps2,
+</span></span><span style="display:flex;"><span>}<span style="color:#ff6ac1">:</span> CardProps) <span style="color:#ff6ac1">=&gt;</span> {
+</span></span><span style="display:flex;"><span>  ...
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">return</span> (
+</span></span><span style="display:flex;"><span>    &lt;<span style="color:#ff6ac1">div</span> <span style="color:#57c7ff">style</span><span style="color:#ff6ac1">=</span>{{ border<span style="color:#ff6ac1">:</span> <span style="color:#5af78e">&#34;1px solid black&#34;</span> }}&gt;
+</span></span><span style="display:flex;"><span>      ...
+</span></span><span style="display:flex;"><span>      &lt;<span style="color:#ff6ac1">OtherComponent</span> <span style="color:#57c7ff">neededProps</span><span style="color:#ff6ac1">=</span>{newProps1} /&gt;
+</span></span><span style="display:flex;"><span>      &lt;<span style="color:#ff6ac1">OtherComponent</span> <span style="color:#57c7ff">neededProps</span><span style="color:#ff6ac1">=</span>{newProps2} /&gt;
+</span></span><span style="display:flex;"><span>    &lt;/<span style="color:#ff6ac1">div</span>&gt;
+</span></span><span style="display:flex;"><span>  );
+</span></span><span style="display:flex;"><span>};
+</span></span></code></pre></div><p>Over time, the <code>Card</code> component becomes increasingly messy and hard to read, with <code>&amp;&amp;</code> scattered everywhere and props extending infinitely. The component&rsquo;s functionality relies entirely on guessing whether a certain prop is used.</p>
+<p>This approach of gradually adding props is untenable.</p>
+<h2 id="how-to-deal-with-props-hell">
+  How to Deal with Props Hell?
+</h2><p>After studying mature UI component libraries , I found that most of them use the Compound Pattern to solve this problem 💡!</p>
+<p><strong>How do other component libraries use the Compound Pattern?</strong></p>
+<ul>
+<li>Split the component into multiple sub-components.</li>
+<li>Use the namespace component pattern to show the hierarchical relationship between components and avoid naming conflicts.</li>
+<li>Share state through Context.</li>
+</ul>
+<h2 id="implementing-the-compound-pattern">
+  Implementing the Compound Pattern
+</h2><h3 id="component-decomposition">
+  Component Decomposition
+</h3><p>We can split the original <code>Card</code> component into multiple smaller sub-components, allowing each sub-component to focus on its own functionality.</p>
+<p>For example, first extract parts like <code>title</code> and <code>description</code> that do not depend on optional props:</p>
+<div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-tsx" data-lang="tsx"><span style="display:flex;"><span><span style="color:#ff6ac1">const</span> Title <span style="color:#ff6ac1">=</span> ({ children }<span style="color:#ff6ac1">:</span> React.PropsWithChildren) <span style="color:#ff6ac1">=&gt;</span> {
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">return</span> &lt;<span style="color:#ff6ac1">h2</span>&gt;{children}&lt;/<span style="color:#ff6ac1">h2</span>&gt;;
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">const</span> Description <span style="color:#ff6ac1">=</span> ({ children }<span style="color:#ff6ac1">:</span> React.PropsWithChildren) <span style="color:#ff6ac1">=&gt;</span> {
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">return</span> &lt;<span style="color:#ff6ac1">p</span>&gt;{children}&lt;/<span style="color:#ff6ac1">p</span>&gt;;
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">const</span> Card <span style="color:#ff6ac1">=</span> ({ children }<span style="color:#ff6ac1">:</span> React.PropsWithChildren) <span style="color:#ff6ac1">=&gt;</span> {
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">return</span> &lt;<span style="color:#ff6ac1">div</span> <span style="color:#57c7ff">style</span><span style="color:#ff6ac1">=</span>{{ border<span style="color:#ff6ac1">:</span> <span style="color:#5af78e">&#34;1px solid black&#34;</span> }}&gt;{children}&lt;/<span style="color:#ff6ac1">div</span>&gt;;
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Card.Title <span style="color:#ff6ac1">=</span> Title;
+</span></span><span style="display:flex;"><span>Card.Description <span style="color:#ff6ac1">=</span> Description;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#78787e">// Usage
+</span></span></span><span style="display:flex;"><span><span style="color:#78787e"></span>&lt;<span style="color:#ff6ac1">Card</span>&gt;
+</span></span><span style="display:flex;"><span>  &lt;<span style="color:#ff6ac1">Card.Title</span>&gt;Hello&lt;/<span style="color:#ff6ac1">Card.Title</span>&gt;
+</span></span><span style="display:flex;"><span>  &lt;<span style="color:#ff6ac1">Card.Description</span>&gt;World&lt;/<span style="color:#ff6ac1">Card.Description</span>&gt;
+</span></span><span style="display:flex;"><span>&lt;/<span style="color:#ff6ac1">Card</span>&gt;;
+</span></span></code></pre></div><p>As for the content of the optional props, we&rsquo;ll handle them separately in the <code>Edit</code> component.</p>
+<div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-tsx" data-lang="tsx"><span style="display:flex;"><span><span style="color:#ff6ac1">type</span> EditProps <span style="color:#ff6ac1">=</span> {
+</span></span><span style="display:flex;"><span>  updateDescription<span style="color:#ff6ac1">:</span> (newDescription: <span style="color:#9aedfe">string</span>) <span style="color:#ff6ac1">=&gt;</span> <span style="color:#ff6ac1">void</span>;
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">const</span> Edit <span style="color:#ff6ac1">=</span> ({ updateDescription }<span style="color:#ff6ac1">:</span> EditProps) <span style="color:#ff6ac1">=&gt;</span> {
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">const</span> [isOpen, setIsOpen] <span style="color:#ff6ac1">=</span> useState(<span style="color:#ff6ac1">false</span>);
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">const</span> [newDescription, setNewDescription] <span style="color:#ff6ac1">=</span> useState(<span style="color:#5af78e">&#34;&#34;</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">const</span> handleDescriptionChange <span style="color:#ff6ac1">=</span> (e: <span style="color:#9aedfe">React.ChangeEvent</span>&lt;<span style="color:#ff6ac1">HTMLInputElement</span>&gt;) <span style="color:#ff6ac1">=&gt;</span> {
+</span></span><span style="display:flex;"><span>    setNewDescription(e.target.value);
+</span></span><span style="display:flex;"><span>  };
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">const</span> handleConfirm <span style="color:#ff6ac1">=</span> () <span style="color:#ff6ac1">=&gt;</span> {
+</span></span><span style="display:flex;"><span>    updateDescription<span style="color:#ff6ac1">?</span>.(newDescription);
+</span></span><span style="display:flex;"><span>    setIsOpen(<span style="color:#ff6ac1">false</span>);
+</span></span><span style="display:flex;"><span>  };
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">return</span> (
+</span></span><span style="display:flex;"><span>    &lt;&gt;
+</span></span><span style="display:flex;"><span>      &lt;<span style="color:#ff6ac1">button</span> <span style="color:#57c7ff">onClick</span><span style="color:#ff6ac1">=</span>{() <span style="color:#ff6ac1">=&gt;</span> setIsOpen(<span style="color:#ff6ac1">true</span>)}&gt;Edit&lt;/<span style="color:#ff6ac1">button</span>&gt;
+</span></span><span style="display:flex;"><span>      {isOpen <span style="color:#ff6ac1">&amp;&amp;</span> (
+</span></span><span style="display:flex;"><span>        &lt;<span style="color:#ff6ac1">dialog</span> <span style="color:#57c7ff">open</span>&gt;
+</span></span><span style="display:flex;"><span>          &lt;<span style="color:#ff6ac1">input</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#57c7ff">type</span><span style="color:#ff6ac1">=</span><span style="color:#5af78e">&#34;text&#34;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#57c7ff">value</span><span style="color:#ff6ac1">=</span>{newDescription}
+</span></span><span style="display:flex;"><span>            <span style="color:#57c7ff">onChange</span><span style="color:#ff6ac1">=</span>{handleDescriptionChange}
+</span></span><span style="display:flex;"><span>          /&gt;
+</span></span><span style="display:flex;"><span>          &lt;<span style="color:#ff6ac1">button</span> <span style="color:#57c7ff">onClick</span><span style="color:#ff6ac1">=</span>{handleConfirm}&gt;Confirm&lt;/<span style="color:#ff6ac1">button</span>&gt;
+</span></span><span style="display:flex;"><span>        &lt;/<span style="color:#ff6ac1">dialog</span>&gt;
+</span></span><span style="display:flex;"><span>      )}
+</span></span><span style="display:flex;"><span>    &lt;/&gt;
+</span></span><span style="display:flex;"><span>  );
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Card.Edit <span style="color:#ff6ac1">=</span> Edit;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#78787e">// Usage
+</span></span></span><span style="display:flex;"><span><span style="color:#78787e"></span><span style="color:#ff6ac1">return</span> (
+</span></span><span style="display:flex;"><span>  &lt;<span style="color:#ff6ac1">Card</span>&gt;
+</span></span><span style="display:flex;"><span>    &lt;<span style="color:#ff6ac1">Card.Title</span>&gt;{title}&lt;/<span style="color:#ff6ac1">Card.Title</span>&gt;
+</span></span><span style="display:flex;"><span>    &lt;<span style="color:#ff6ac1">Card.Description</span>&gt;{description}&lt;/<span style="color:#ff6ac1">Card.Description</span>&gt;
+</span></span><span style="display:flex;"><span>    &lt;<span style="color:#ff6ac1">Card.Edit</span> <span style="color:#57c7ff">updateDescription</span><span style="color:#ff6ac1">=</span>{updateDescription} /&gt;
+</span></span><span style="display:flex;"><span>  &lt;/<span style="color:#ff6ac1">Card</span>&gt;
+</span></span><span style="display:flex;"><span>);
+</span></span></code></pre></div><p>Doesn&rsquo;t it look much cleaner now? If the <code>Card</code> component needs to incorporate new sub-components, in most cases we only need to add sub-components without modifying the <code>Card</code> component itself.</p>
+<p>Additionally, using <code>Card.xx</code> clearly shows the hierarchical relationship between components.</p>
+<p>But what if someone misuses it? 🤔 For instance, uses <code>Card.xx</code> elsewhere—that would be awkward.</p>
+<p>And what if we need to pass values to the sub-components of <code>Card</code>&rsquo;s sub-components?</p>
+<h3 id="state-management">
+  State Management
+</h3><p>Let&rsquo;s upgrade by using Context to share state and throw errors when there is no Context.</p>
+<div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-tsx" data-lang="tsx"><span style="display:flex;"><span><span style="color:#ff6ac1">const</span> DEFAULT_COLOR <span style="color:#ff6ac1">=</span> <span style="color:#5af78e">&#34;#000&#34;</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">type</span> CardProps <span style="color:#ff6ac1">=</span> {
+</span></span><span style="display:flex;"><span>  textColor: <span style="color:#9aedfe">string</span>;
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">const</span> CardContext <span style="color:#ff6ac1">=</span> createContext&lt;<span style="color:#ff6ac1">CardProps</span> <span style="color:#ff5c57">|</span> <span style="color:#57c7ff">null</span>&gt;(<span style="color:#ff6ac1">null</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">const</span> DescriptionInner <span style="color:#ff6ac1">=</span> ({ children }<span style="color:#ff6ac1">:</span> React.PropsWithChildren) <span style="color:#ff6ac1">=&gt;</span> {
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">const</span> context <span style="color:#ff6ac1">=</span> useContext(CardContext);
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">if</span> (<span style="color:#ff6ac1">!</span>context) {
+</span></span><span style="display:flex;"><span>    <span style="color:#ff6ac1">throw</span> <span style="color:#ff6ac1">new</span> <span style="color:#ff5c57">Error</span>(<span style="color:#5af78e">&#34;DescriptionInner must be used within a Card&#34;</span>);
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">return</span> &lt;<span style="color:#ff6ac1">span</span> <span style="color:#57c7ff">style</span><span style="color:#ff6ac1">=</span>{{ color: <span style="color:#9aedfe">context?.textColor</span> }}&gt;{children}&lt;/<span style="color:#ff6ac1">span</span>&gt;;
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">const</span> Description <span style="color:#ff6ac1">=</span> ({ children }<span style="color:#ff6ac1">:</span> React.PropsWithChildren) <span style="color:#ff6ac1">=&gt;</span> {
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">return</span> (
+</span></span><span style="display:flex;"><span>    &lt;<span style="color:#ff6ac1">p</span>&gt;
+</span></span><span style="display:flex;"><span>      &lt;<span style="color:#ff6ac1">DescriptionInner</span>&gt;{children}&lt;/<span style="color:#ff6ac1">DescriptionInner</span>&gt;
+</span></span><span style="display:flex;"><span>    &lt;/<span style="color:#ff6ac1">p</span>&gt;
+</span></span><span style="display:flex;"><span>  );
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">const</span> Card <span style="color:#ff6ac1">=</span> ({ children, textColor }<span style="color:#ff6ac1">:</span> React.PropsWithChildren&lt;<span style="color:#ff6ac1">CardProps</span>&gt;) <span style="color:#ff6ac1">=&gt;</span> {
+</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">return</span> (
+</span></span><span style="display:flex;"><span>    &lt;<span style="color:#ff6ac1">CardContext.Provider</span> <span style="color:#57c7ff">value</span><span style="color:#ff6ac1">=</span>{{ textColor }}&gt;
+</span></span><span style="display:flex;"><span>      &lt;<span style="color:#ff6ac1">div</span> <span style="color:#57c7ff">style</span><span style="color:#ff6ac1">=</span>{{ border<span style="color:#ff6ac1">:</span> <span style="color:#5af78e">&#34;1px solid black&#34;</span> }}&gt;{children}&lt;/<span style="color:#ff6ac1">div</span>&gt;
+</span></span><span style="display:flex;"><span>    &lt;/<span style="color:#ff6ac1">CardContext.Provider</span>&gt;
+</span></span><span style="display:flex;"><span>  );
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#78787e">// Correct usage
+</span></span></span><span style="display:flex;"><span><span style="color:#78787e"></span>&lt;<span style="color:#ff6ac1">Card</span> <span style="color:#57c7ff">textColor</span><span style="color:#ff6ac1">=</span><span style="color:#5af78e">&#34;blue&#34;</span>&gt;
+</span></span><span style="display:flex;"><span>  &lt;<span style="color:#ff6ac1">Card.Title</span>&gt;Hello&lt;/<span style="color:#ff6ac1">Card.Title</span>&gt;
+</span></span><span style="display:flex;"><span>  &lt;<span style="color:#ff6ac1">Card.Description</span>&gt;World&lt;/<span style="color:#ff6ac1">Card.Description</span>&gt;
+</span></span><span style="display:flex;"><span>&lt;/<span style="color:#ff6ac1">Card</span>&gt;;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#78787e">// Incorrect usage - Error: DescriptionInner must be used within a Card
+</span></span></span><span style="display:flex;"><span><span style="color:#78787e"></span>&lt;<span style="color:#ff6ac1">Card.Edit</span> <span style="color:#57c7ff">updateDescription</span><span style="color:#ff6ac1">=</span>{updateDescription} /&gt;;
+</span></span></code></pre></div><h2 id="conclusion">
+  Conclusion
+</h2><p>When developing a common component library, as the complexity of the component increases, simply passing props makes the component difficult to maintain.</p>
+<p>At this point, using the Compound Pattern can effectively solve the problem. By splitting complex components into multiple single-function sub-components and managing state through Context, we enhance the component&rsquo;s extensibility and maintainability.</p>
+<p>Programming is a dynamic process, and requirements are constantly changing. During development, we need to balance the flexibility and complexity of components and choose design patterns reasonably to solve problems.</p>
+<p>Of course, over-designing can also increase development costs, so we need to make trade-offs based on actual situations.</p>
+        </div>
+
+    </article>
+
+    
+    
+
+    
+        
+        
+    
+
+    
+
+    
+        
+
+
+
+
+
+
+
+
+
+    
+
+    
+
+    
+
+        </main>
+        
+            <footer class="common-footer noselect">
+    
+    
+        <ul class="language-select">
+    
+    
+    
+
+    
+        
+            <li>English</li>
+        
+    
+        
+            <li><a href="/zh/posts/react-shared-components-compound-pattern-journey/">中文</a></li>
+        
+    
+</ul>
+
+    
+
+    <div class="common-footer-bottom">
+        
+
+        <div style="display: flex; align-items: center; gap:8px">
+            ©  Yiqi,  2024
+            
+        </div>
+        <div style="display:flex;align-items: center">
+            
+            
+            
+            
+            
+            
+        </div>
+        <div>
+            Powered by <a target="_blank" rel="noopener noreferrer" href="https://gohugo.io/">Hugo</a>, theme <a target="_blank" rel="noopener noreferrer" href="https://github.com/Junyi-99/hugo-theme-anubis2">Anubis2</a>.<br>
+            
+
+        </div>
+    </div>
+
+    <p class="h-card vcard">
+
+    <a href=http://localhost:1313/ class="p-name u-url url fn" rel="me">map[email:halfseteamedbun@gmail.com location:Mainland China name:Yiqi]</a>
+
+    
+
+    
+</p>
+
+</footer>
+
+        
+    </div>
+</body>
+</html>
