@@ -19,7 +19,7 @@
     
 
     
-    <lastBuildDate>Wed, 20 Mar 2024 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Thu, 11 Jan 2024 00:00:00 +0000</lastBuildDate>
     
     <atom:link href="/tags/react/index.xml" rel="self" type="application/rss+xml" />
     
@@ -27,7 +27,7 @@
     <item>
       <title>From Props Hell to the Compound Pattern: How to Design a Common React Component Library</title>
       <link>/posts/react-shared-components-compound-pattern-journey/</link>
-      <pubDate>Wed, 20 Mar 2024 00:00:00 +0000</pubDate>
+      <pubDate>Thu, 11 Jan 2024 00:00:00 +0000</pubDate>
       <author>halfseteamedbun@gmail.com (Yiqi)</author>
       <guid>/posts/react-shared-components-compound-pattern-journey/</guid>
       <description>&lt;h2 id=&#34;background&#34;&gt;
@@ -131,7 +131,7 @@
 &lt;p&gt;This approach of gradually adding props is untenable.&lt;/p&gt;
 &lt;h2 id=&#34;how-to-deal-with-props-hell&#34;&gt;
   How to Deal with Props Hell?
-&lt;/h2&gt;&lt;p&gt;After studying mature UI component libraries 😏, I found that most of them use the Compound Pattern to solve this problem 💡!&lt;/p&gt;
+&lt;/h2&gt;&lt;p&gt;After studying mature UI component libraries , I found that most of them use the Compound Pattern to solve this problem 💡!&lt;/p&gt;
 &lt;p&gt;&lt;strong&gt;How do other component libraries use the Compound Pattern?&lt;/strong&gt;&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;Split the component into multiple sub-components.&lt;/li&gt;
@@ -259,8 +259,7 @@
 &lt;/h2&gt;&lt;p&gt;When developing a common component library, as the complexity of the component increases, simply passing props makes the component difficult to maintain.&lt;/p&gt;
 &lt;p&gt;At this point, using the Compound Pattern can effectively solve the problem. By splitting complex components into multiple single-function sub-components and managing state through Context, we enhance the component&amp;rsquo;s extensibility and maintainability.&lt;/p&gt;
 &lt;p&gt;Programming is a dynamic process, and requirements are constantly changing. During development, we need to balance the flexibility and complexity of components and choose design patterns reasonably to solve problems.&lt;/p&gt;
-&lt;p&gt;Of course, over-designing can also increase development costs, so we need to make trade-offs based on actual situations.&lt;/p&gt;
-</description>
+&lt;p&gt;Of course, over-designing can also increase development costs, so we need to make trade-offs based on actual situations.&lt;/p&gt;</description>
     </item>
     
   </channel>

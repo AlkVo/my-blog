@@ -335,160 +335,6 @@
             
             
             <h1 class="p-name post-title ">
-                <a class="u-url" href="/zh/posts/react-shared-components-compound-pattern-journey/">从 Props Hell 到 Compound Pattern：React 公共组件库的重构之路</a>
-            </h1>
-        </header>
-        
-
-    </div>
-
-    
-        <div class="content post-summary p-summary">
-            <h2 id="背景">
-  背景
-</h2><p>封装公共组件库的时候时常会遇到一个问题。</p>
-<p>当下的设计是合适的。但是随着项目开发的进展，UI 的设计会出现变动。</p>
-<p>比如一开始这个组件只需要展示 <code>title</code> 和 <code>description</code>:</p>
-<div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-tsx" data-lang="tsx"><span style="display:flex;"><span><span style="color:#ff6ac1">type</span> CardProps <span style="color:#ff6ac1">=</span> {
-</span></span><span style="display:flex;"><span>  title: <span style="color:#9aedfe">string</span>;
-</span></span><span style="display:flex;"><span>  description: <span style="color:#9aedfe">string</span>;
-</span></span><span style="display:flex;"><span>};
-</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">const</span> Card <span style="color:#ff6ac1">=</span> ({ title, description }<span style="color:#ff6ac1">:</span> CardProps) <span style="color:#ff6ac1">=&gt;</span> {
-</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">return</span> (
-</span></span><span style="display:flex;"><span>    &lt;<span style="color:#ff6ac1">div</span> <span style="color:#57c7ff">style</span><span style="color:#ff6ac1">=</span>{{ border<span style="color:#ff6ac1">:</span> <span style="color:#5af78e">&#34;1px solid black&#34;</span> }}&gt;
-</span></span><span style="display:flex;"><span>      &lt;<span style="color:#ff6ac1">h2</span>&gt;{title}&lt;/<span style="color:#ff6ac1">h2</span>&gt;
-</span></span><span style="display:flex;"><span>      &lt;<span style="color:#ff6ac1">p</span>&gt;{description}&lt;/<span style="color:#ff6ac1">p</span>&gt;
-</span></span><span style="display:flex;"><span>    &lt;/<span style="color:#ff6ac1">div</span>&gt;
-</span></span><span style="display:flex;"><span>  );
-</span></span><span style="display:flex;"><span>};
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#ff5c57">function</span> App() {
-</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">return</span> &lt;<span style="color:#ff6ac1">Card</span> <span style="color:#57c7ff">title</span><span style="color:#ff6ac1">=</span><span style="color:#5af78e">&#34;Hello&#34;</span> <span style="color:#57c7ff">description</span><span style="color:#ff6ac1">=</span><span style="color:#5af78e">&#34;World&#34;</span> /&gt;;
-</span></span><span style="display:flex;"><span>}
-</span></span></code></pre></div><p>但是过了两个月后，来了一个新的需求，在某个场景下可以修改这个卡片的内容。
-所以我们需要：</p>
-<ol>
-<li>增加一个 Edit Button。</li>
-<li>点击 Edit Button 的时候，弹出弹框对 <code>description</code> 进行修改。</li>
-</ol>
-<p>那么为了兼容旧的使用，我们不得不在组件里新增了两个 optional props，<code>isEditable</code> 和 <code>updateDescription</code>。</p>
-<div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-tsx" data-lang="tsx"><span style="display:flex;"><span><span style="color:#ff6ac1">type</span> CardProps <span style="color:#ff6ac1">=</span> {
-</span></span><span style="display:flex;"><span>  title: <span style="color:#9aedfe">string</span>;
-</span></span><span style="display:flex;"><span>  description: <span style="color:#9aedfe">string</span>;
-</span></span><span style="display:flex;"><span>  isEditable?: <span style="color:#9aedfe">boolean</span>;
-</span></span><span style="display:flex;"><span>  updateDescription<span style="color:#ff6ac1">?:</span> (newDescription: <span style="color:#9aedfe">string</span>) <span style="color:#ff6ac1">=&gt;</span> <span style="color:#ff6ac1">void</span>;
-</span></span><span style="display:flex;"><span>};
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">const</span> Card <span style="color:#ff6ac1">=</span> ({
-</span></span><span style="display:flex;"><span>  title,
-</span></span><span style="display:flex;"><span>  description,
-</span></span><span style="display:flex;"><span>  isEditable,
-</span></span><span style="display:flex;"><span>  updateDescription,
-</span></span><span style="display:flex;"><span>}<span style="color:#ff6ac1">:</span> CardProps) <span style="color:#ff6ac1">=&gt;</span> {
-</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">const</span> [isOpen, setIsOpen] <span style="color:#ff6ac1">=</span> useState(<span style="color:#ff6ac1">false</span>);
-</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">const</span> [newDescription, setNewDescription] <span style="color:#ff6ac1">=</span> useState(description);
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">const</span> handleDescriptionChange <span style="color:#ff6ac1">=</span> (e: <span style="color:#9aedfe">React.ChangeEvent</span>&lt;<span style="color:#ff6ac1">HTMLInputElement</span>&gt;) <span style="color:#ff6ac1">=&gt;</span> {
-</span></span><span style="display:flex;"><span>    setNewDescription(e.target.value);
-</span></span><span style="display:flex;"><span>  };
-</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">const</span> handleConfirm <span style="color:#ff6ac1">=</span> () <span style="color:#ff6ac1">=&gt;</span> {
-</span></span><span style="display:flex;"><span>    updateDescription<span style="color:#ff6ac1">?</span>.(newDescription);
-</span></span><span style="display:flex;"><span>    setIsOpen(<span style="color:#ff6ac1">false</span>);
-</span></span><span style="display:flex;"><span>  };
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">return</span> (
-</span></span><span style="display:flex;"><span>    &lt;<span style="color:#ff6ac1">div</span> <span style="color:#57c7ff">style</span><span style="color:#ff6ac1">=</span>{{ border<span style="color:#ff6ac1">:</span> <span style="color:#5af78e">&#34;1px solid black&#34;</span> }}&gt;
-</span></span><span style="display:flex;"><span>      &lt;<span style="color:#ff6ac1">h2</span>&gt;{title}&lt;/<span style="color:#ff6ac1">h2</span>&gt;
-</span></span><span style="display:flex;"><span>      &lt;<span style="color:#ff6ac1">p</span>&gt;{description}&lt;/<span style="color:#ff6ac1">p</span>&gt;
-</span></span><span style="display:flex;"><span>      {isEditable <span style="color:#ff6ac1">&amp;&amp;</span> &lt;<span style="color:#ff6ac1">button</span> <span style="color:#57c7ff">onClick</span><span style="color:#ff6ac1">=</span>{() <span style="color:#ff6ac1">=&gt;</span> setIsOpen(<span style="color:#ff6ac1">true</span>)}&gt;Edit&lt;/<span style="color:#ff6ac1">button</span>&gt;}
-</span></span><span style="display:flex;"><span>      {isOpen <span style="color:#ff6ac1">&amp;&amp;</span> (
-</span></span><span style="display:flex;"><span>        &lt;<span style="color:#ff6ac1">dialog</span> <span style="color:#57c7ff">open</span>&gt;
-</span></span><span style="display:flex;"><span>          &lt;<span style="color:#ff6ac1">input</span>
-</span></span><span style="display:flex;"><span>            <span style="color:#57c7ff">type</span><span style="color:#ff6ac1">=</span><span style="color:#5af78e">&#34;text&#34;</span>
-</span></span><span style="display:flex;"><span>            <span style="color:#57c7ff">value</span><span style="color:#ff6ac1">=</span>{newDescription}
-</span></span><span style="display:flex;"><span>            <span style="color:#57c7ff">onChange</span><span style="color:#ff6ac1">=</span>{handleDescriptionChange}
-</span></span><span style="display:flex;"><span>          /&gt;
-</span></span><span style="display:flex;"><span>          &lt;<span style="color:#ff6ac1">button</span> <span style="color:#57c7ff">onClick</span><span style="color:#ff6ac1">=</span>{handleConfirm}&gt;Confirm&lt;/<span style="color:#ff6ac1">button</span>&gt;
-</span></span><span style="display:flex;"><span>        &lt;/<span style="color:#ff6ac1">dialog</span>&gt;
-</span></span><span style="display:flex;"><span>      )}
-</span></span><span style="display:flex;"><span>    &lt;/<span style="color:#ff6ac1">div</span>&gt;
-</span></span><span style="display:flex;"><span>  );
-</span></span><span style="display:flex;"><span>};
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#ff5c57">function</span> App() {
-</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">const</span> [data, setData] <span style="color:#ff6ac1">=</span> useState({
-</span></span><span style="display:flex;"><span>    title<span style="color:#ff6ac1">:</span> <span style="color:#5af78e">&#34;New Hello&#34;</span>,
-</span></span><span style="display:flex;"><span>    description<span style="color:#ff6ac1">:</span> <span style="color:#5af78e">&#34;New World&#34;</span>,
-</span></span><span style="display:flex;"><span>  });
-</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">const</span> updateDescription <span style="color:#ff6ac1">=</span> (newDescription: <span style="color:#9aedfe">string</span>) <span style="color:#ff6ac1">=&gt;</span> {
-</span></span><span style="display:flex;"><span>    setData({ ...data, description: <span style="color:#9aedfe">newDescription</span> });
-</span></span><span style="display:flex;"><span>  };
-</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">return</span> (
-</span></span><span style="display:flex;"><span>    &lt;&gt;
-</span></span><span style="display:flex;"><span>      {<span style="color:#78787e">/* 旧的使用 */</span>}
-</span></span><span style="display:flex;"><span>      &lt;<span style="color:#ff6ac1">Card</span> <span style="color:#57c7ff">title</span><span style="color:#ff6ac1">=</span><span style="color:#5af78e">&#34;Hello&#34;</span> <span style="color:#57c7ff">description</span><span style="color:#ff6ac1">=</span><span style="color:#5af78e">&#34;World&#34;</span> /&gt;
-</span></span><span style="display:flex;"><span>      {<span style="color:#78787e">/* 新的使用 */</span>}
-</span></span><span style="display:flex;"><span>      &lt;<span style="color:#ff6ac1">Card</span>
-</span></span><span style="display:flex;"><span>        <span style="color:#57c7ff">title</span><span style="color:#ff6ac1">=</span>{data.title}
-</span></span><span style="display:flex;"><span>        <span style="color:#57c7ff">description</span><span style="color:#ff6ac1">=</span>{data.description}
-</span></span><span style="display:flex;"><span>        <span style="color:#57c7ff">isEditable</span><span style="color:#ff6ac1">=</span>{<span style="color:#ff6ac1">true</span>}
-</span></span><span style="display:flex;"><span>        <span style="color:#57c7ff">updateDescription</span><span style="color:#ff6ac1">=</span>{updateDescription}
-</span></span><span style="display:flex;"><span>      /&gt;
-</span></span><span style="display:flex;"><span>    &lt;/&gt;
-</span></span><span style="display:flex;"><span>  );
-</span></span><span style="display:flex;"><span>}
-</span></span></code></pre></div><p>可以想象, 再过两个月，又来一个新需求，要求弹出的提示框的内容根据场景指定，那么我们的 Card 组件又要新增一个叫做 <code>dialogDescription</code> 的 optional prop 了。</p>
-        </div>
-    
-
-    
-
-    
-
-
-
-<div class="post-info noselect">
-    
-        <div class="post-date dt-published">
-            <time datetime="2024-03-20">2024-03-20</time>
-            
-        </div>
-    
-
-    <a class="post-hidden-url u-url" href="/zh/posts/react-shared-components-compound-pattern-journey/">/zh/posts/react-shared-components-compound-pattern-journey/</a>
-    <a href="http://localhost:1313/" class="p-name p-author post-hidden-author h-card" rel="me">map[email:halfseteamedbun@gmail.com location:Mainland China name:Yiqi]</a>
-
-
-    <div class="post-taxonomies">
-        
-        
-            <ul class="post-tags">
-                
-                    
-                    <li><a href="/zh/tags/react/">#React</a></li>
-                
-                    
-                    <li><a href="/zh/tags/patterns/">#Patterns</a></li>
-                
-                    
-                    <li><a href="/zh/tags/fe/">#FE</a></li>
-                
-            </ul>
-        
-        
-    </div>
-</div>
-
-</article>
-
-    
-        <article class="post-list h-feed post-card">
-    <div class="post-header">
-        <header>
-            
-            
-            
-            <h1 class="p-name post-title ">
                 <a class="u-url" href="/zh/posts/advance-typescript/">Advance Typescript</a>
             </h1>
         </header>
@@ -561,6 +407,90 @@
                 
                     
                     <li><a href="/zh/tags/typescript/">#TypeScript</a></li>
+                
+            </ul>
+        
+        
+    </div>
+</div>
+
+</article>
+
+    
+        <article class="post-list h-feed post-card">
+    <div class="post-header">
+        <header>
+            
+            
+            
+            <h1 class="p-name post-title ">
+                <a class="u-url" href="/zh/posts/react-shared-components-compound-pattern-journey/">从 Props Hell 到 Compound Pattern：该如何设计公共的 React 组件库</a>
+            </h1>
+        </header>
+        
+    
+    <span>
+        <ul class="post-translations">
+            
+                
+                    <li>
+                        <a href="/posts/react-shared-components-compound-pattern-journey/">EN</a>
+                    </li>
+                
+            
+                
+                    <li>
+                        ZH
+                    </li>
+                
+            
+        </ul>
+    </span>
+
+
+    </div>
+
+    
+        <div class="content post-summary p-summary">
+            <h2 id="背景">
+  背景
+</h2><h3 id="props-hell-的产生">
+  Props Hell 的产生
+</h3><p>在封装公共组件库时，我们常常会遇到一个问题：初始设计看似合理，但随着项目开发的深入，UI 需求不断变化，组件的逻辑和 props 变得愈加复杂。</p>
+        </div>
+    
+
+    
+
+    
+
+
+
+<div class="post-info noselect">
+    
+        <div class="post-date dt-published">
+            <time datetime="2024-01-11">2024-01-11</time>
+            
+        </div>
+    
+
+    <a class="post-hidden-url u-url" href="/zh/posts/react-shared-components-compound-pattern-journey/">/zh/posts/react-shared-components-compound-pattern-journey/</a>
+    <a href="http://localhost:1313/" class="p-name p-author post-hidden-author h-card" rel="me">map[email:halfseteamedbun@gmail.com location:Mainland China name:Yiqi]</a>
+
+
+    <div class="post-taxonomies">
+        
+        
+            <ul class="post-tags">
+                
+                    
+                    <li><a href="/zh/tags/react/">#React</a></li>
+                
+                    
+                    <li><a href="/zh/tags/patterns/">#Patterns</a></li>
+                
+                    
+                    <li><a href="/zh/tags/fe/">#FE</a></li>
                 
             </ul>
         

@@ -335,7 +335,7 @@
             
             
             <h1 class="p-name post-title ">
-                <a class="u-url" href="/zh/posts/auto-merge/">使用 GitLab CI 自动合并 master 分支代码到其他分支</a>
+                <a class="u-url" href="/zh/posts/auto-merge/">通过 GitLab CI 实现 master 分支到 stg 和 pre 分支的自动同步</a>
             </h1>
         </header>
         
@@ -365,16 +365,9 @@
         <div class="content post-summary p-summary">
             <h2 id="背景">
   背景
-</h2><p>在我们的开发流程中，要求在发布代码合并到 <code>master</code> 分支后，<code>stg</code> 和 <code>pre</code> 分支也必须包含最新的 <code>master</code> 代码。</p>
+</h2><p>公司的 git flow 表明，在发布代码合并到 <code>master</code> 分支后，<code>stg</code> 和 <code>pre</code> 分支也必须包含最新的 <code>master</code> 代码。</p>
 <p>为此，公司设置了一个机器人（bot）来比较 commit 差异。如果在发布代码合并到 <code>master</code> 分支一天后，<code>stg</code> 和 <code>pre</code> 分支仍未更新，团队收到提醒。</p>
-<p>然而，团队成员经常忘记手动执行这个合并操作，导致频繁的提醒，影响了工作效率。</p>
-<h2 id="解决方案">
-  解决方案
-</h2><p>为了自动化这一流程，避免人为疏忽，我编写了一个 GitLab CI 脚本，一旦 <code>master</code> 分支的代码发生变动：</p>
-<ol>
-<li><strong>自动合并</strong>：将 <code>master</code> 分支的代码自动合并到 <code>stg</code> 和 <code>pre</code> 分支。</li>
-<li><strong>异常处理</strong>：如果合并过程中出现冲突，导致合并失败，脚本会自动创建一个 Merge Request（MR），提醒开发者及时处理。</li>
-</ol>
+<p>然而，我所在的团队成员总是忘记手动执行这个合并操作，导致频繁的提醒，影响了工作效率。</p>
         </div>
     
 

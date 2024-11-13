@@ -119,6 +119,45 @@
           href="http://localhost:1313/tags/typescript/"
         />
       </url><url>
+        <loc>http://localhost:1313/posts/react-shared-components-compound-pattern-journey/</loc>
+        <lastmod>2024-01-11T00:00:00+00:00</lastmod>
+        <xhtml:link
+          rel="alternate"
+          hreflang="zh"
+          href="http://localhost:1313/zh/posts/react-shared-components-compound-pattern-journey/"
+        />
+        <xhtml:link
+          rel="alternate"
+          hreflang="en"
+          href="http://localhost:1313/posts/react-shared-components-compound-pattern-journey/"
+        />
+      </url><url>
+        <loc>http://localhost:1313/tags/patterns/</loc>
+        <lastmod>2024-01-11T00:00:00+00:00</lastmod>
+        <xhtml:link
+          rel="alternate"
+          hreflang="zh"
+          href="http://localhost:1313/zh/tags/patterns/"
+        />
+        <xhtml:link
+          rel="alternate"
+          hreflang="en"
+          href="http://localhost:1313/tags/patterns/"
+        />
+      </url><url>
+        <loc>http://localhost:1313/tags/react/</loc>
+        <lastmod>2024-01-11T00:00:00+00:00</lastmod>
+        <xhtml:link
+          rel="alternate"
+          hreflang="zh"
+          href="http://localhost:1313/zh/tags/react/"
+        />
+        <xhtml:link
+          rel="alternate"
+          hreflang="en"
+          href="http://localhost:1313/tags/react/"
+        />
+      </url><url>
         <loc>http://localhost:1313/about/</loc>
         <xhtml:link
           rel="alternate"

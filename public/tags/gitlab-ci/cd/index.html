@@ -335,7 +335,7 @@
             
             
             <h1 class="p-name post-title ">
-                <a class="u-url" href="/posts/auto-merge/">Automatically Merging Master Branch Code to Other Branches Using GitLab CI</a>
+                <a class="u-url" href="/posts/auto-merge/">Automating Master Branch Synchronization to Staging and Pre-Production Branches with GitLab CI/CD</a>
             </h1>
         </header>
         
@@ -368,13 +368,6 @@
 </h2><p>In our development process, it is required that after the release code is merged into the <code>master</code> branch, the <code>stg</code> and <code>pre</code> branches must also contain the latest <code>master</code> code.</p>
 <p>To ensure this, the company has set up a bot to compare commit differences. If, one day after the release code has been merged into the <code>master</code> branch, the <code>stg</code> and <code>pre</code> branches have not been updated, the team receives a reminder.</p>
 <p>However, team members often forget to manually perform this merge operation, leading to frequent reminders and impacting work efficiency.</p>
-<h2 id="solution">
-  Solution
-</h2><p>To automate this process and avoid human oversight, I wrote a GitLab CI script that, once changes occur in the <code>master</code> branch:</p>
-<ol>
-<li><strong>Automatic Merge</strong>: Automatically merges the code from the <code>master</code> branch into the <code>stg</code> and <code>pre</code> branches.</li>
-<li><strong>Exception Handling</strong>: If conflicts occur during the merge process, causing the merge to fail, the script automatically creates a Merge Request (MR) to prompt developers to handle it promptly.</li>
-</ol>
         </div>
     
 

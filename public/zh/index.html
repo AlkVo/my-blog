@@ -337,7 +337,75 @@
             
             
             <h1 class="p-name post-title ">
-                <a class="u-url" href="/zh/posts/auto-merge/">使用 GitLab CI 自动合并 master 分支代码到其他分支</a>
+                <a class="u-url" href="/zh/posts/koa-onion-model-explained/">详解 KOA 洋葱模型的实现原理</a>
+            </h1>
+        </header>
+        
+
+    </div>
+
+    
+        <div class="content post-summary p-summary">
+            <h2 id="背景">
+  背景
+</h2><p>面试的时候面试官问我知道 KOA 的洋葱模型是怎么实现的吗？
+一下把我问住了，我确实没有研究过是如何实现的。自己头脑风暴了一会也没猜到作者的思路。</p>
+<p>面试结束以后，赶紧研究了一下源码，看看框架作者是怎么写的。
+果然是大神！利用递归的特性轻轻松松几行代码就实现了。</p>
+<p>于是就写了这篇文章拆解一下作者的实现思路。</p>
+<h2 id="前置知识">
+  前置知识
+</h2><p>在看源码之前需要先了解一下这两个概念</p>
+<ul>
+<li>洋葱模型</li>
+<li>递归</li>
+</ul>
+        </div>
+    
+
+    
+
+    
+
+
+
+<div class="post-info noselect">
+    
+        <div class="post-date dt-published">
+            <time datetime="2024-11-11">2024-11-11</time>
+            
+        </div>
+    
+
+    <a class="post-hidden-url u-url" href="/zh/posts/koa-onion-model-explained/">/zh/posts/koa-onion-model-explained/</a>
+    <a href="http://localhost:1313/" class="p-name p-author post-hidden-author h-card" rel="me">map[email:halfseteamedbun@gmail.com location:Mainland China name:Yiqi]</a>
+
+
+    <div class="post-taxonomies">
+        
+        
+            <ul class="post-tags">
+                
+                    
+                    <li><a href="/zh/tags/koa/">#KOA</a></li>
+                
+            </ul>
+        
+        
+    </div>
+</div>
+
+</article>
+
+        
+            <article class="post-list h-feed post-card">
+    <div class="post-header">
+        <header>
+            
+            
+            
+            <h1 class="p-name post-title ">
+                <a class="u-url" href="/zh/posts/auto-merge/">通过 GitLab CI 实现 master 分支到 stg 和 pre 分支的自动同步</a>
             </h1>
         </header>
         
@@ -367,9 +435,9 @@
         <div class="content post-summary p-summary">
             <h2 id="背景">
   背景
-</h2><p>在我们的开发流程中，要求在发布代码合并到 <code>master</code> 分支后，<code>stg</code> 和 <code>pre</code> 分支也必须包含最新的 <code>master</code> 代码。</p>
+</h2><p>公司的 git flow 表明，在发布代码合并到 <code>master</code> 分支后，<code>stg</code> 和 <code>pre</code> 分支也必须包含最新的 <code>master</code> 代码。</p>
 <p>为此，公司设置了一个机器人（bot）来比较 commit 差异。如果在发布代码合并到 <code>master</code> 分支一天后，<code>stg</code> 和 <code>pre</code> 分支仍未更新，团队收到提醒。</p>
-<p>然而，团队成员经常忘记手动执行这个合并操作，导致频繁的提醒，影响了工作效率。</p>
+<p>然而，我所在的团队成员总是忘记手动执行这个合并操作，导致频繁的提醒，影响了工作效率。</p>
         </div>
     
 

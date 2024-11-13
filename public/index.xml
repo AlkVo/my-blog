@@ -25,7 +25,7 @@
     
     
     <item>
-      <title>Automatically Merging Master Branch Code to Other Branches Using GitLab CI</title>
+      <title>Automating Master Branch Synchronization to Staging and Pre-Production Branches with GitLab CI/CD</title>
       <link>/posts/auto-merge/</link>
       <pubDate>Sat, 18 May 2024 00:00:00 +0000</pubDate>
       <author>halfseteamedbun@gmail.com (Yiqi)</author>

@@ -1,5 +1,5 @@
 +++
-title = "Automatically Merging Master Branch Code to Other Branches Using GitLab CI"
+title = "Automating Master Branch Synchronization to Staging and Pre-Production Branches with GitLab CI/CD"
 date = 2024-05-18
 draft = false
 tags = ["GitLab CI/CD", "Development Process Optimization"]

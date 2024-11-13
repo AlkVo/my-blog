@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 
 
-<html lang="en" data-theme="">
+<html lang="zh" data-theme="">
 <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
     
         
@@ -10,7 +10,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="referrer" content="no-referrer-when-downgrade">
 
-<title>Development Process Optimization - Yiqi&rsquo;s blog</title>
+<title>KOA - Yiqi&rsquo;s blog</title>
 
 <meta name="description" content="">
 
@@ -18,7 +18,7 @@
 
 
 
-<link rel="alternate" type="application/rss+xml" href="/tags/development-process-optimization/index.xml" title="Yiqi's blog" />
+<link rel="alternate" type="application/rss+xml" href="/zh/tags/koa/index.xml" title="Yiqi's blog" />
 <link rel="icon" type="image/x-icon" href="http://localhost:1313/favicon.ico">
 <link rel="apple-touch-icon-precomposed" href="http://localhost:1313/favicon.png">
 
@@ -157,7 +157,7 @@
                 <div class="header-top">
     <div class="header-top-left">
         <h1 class="site-title noselect">
-    <a href="/">Yiqi&#39;s blog</a>
+    <a href="/zh">Yiqi&#39;s blog</a>
 </h1>
 
         
@@ -270,7 +270,7 @@
 
 
     <li>
-            <a href="/index.xml" title="RSS" rel="me">
+            <a href="/zh/index.xml" title="RSS" rel="me">
             <span class="inline-svg">
 
     
@@ -303,11 +303,11 @@
     <nav class="noselect">
         
         
-        <a class="" href="http://localhost:1313/" title="">Home</a>
+        <a class="" href="http://localhost:1313/zh/" title="">Home</a>
         
-        <a class="" href="http://localhost:1313/about/" title="">About</a>
+        <a class="" href="http://localhost:1313/zh/about/" title="">About</a>
         
-        <a class="" href="http://localhost:1313/tags/" title="">Tags</a>
+        <a class="" href="http://localhost:1313/zh/tags/" title="">Tags</a>
         
     </nav>
 
@@ -322,9 +322,9 @@
         </header>
         <main id="main" tabindex="-1">
             
-    <h1>Tag: Development Process Optimization</h1>
+    <h1>Tag: KOA</h1>
     <div class="post-info">
-        <a href="/tags/">To all tags</a>
+        <a href="/zh/tags/">To all tags</a>
     </div>
     
     
@@ -335,39 +335,29 @@
             
             
             <h1 class="p-name post-title ">
-                <a class="u-url" href="/posts/auto-merge/">Automating Master Branch Synchronization to Staging and Pre-Production Branches with GitLab CI/CD</a>
+                <a class="u-url" href="/zh/posts/koa-onion-model-explained/">详解 KOA 洋葱模型的实现原理</a>
             </h1>
         </header>
         
-    
-    <span>
-        <ul class="post-translations">
-            
-                
-                    <li>
-                        EN
-                    </li>
-                
-            
-                
-                    <li>
-                        <a href="/zh/posts/auto-merge/">ZH</a>
-                    </li>
-                
-            
-        </ul>
-    </span>
-
 
     </div>
 
     
         <div class="content post-summary p-summary">
-            <h2 id="background">
-  Background
-</h2><p>In our development process, it is required that after the release code is merged into the <code>master</code> branch, the <code>stg</code> and <code>pre</code> branches must also contain the latest <code>master</code> code.</p>
-<p>To ensure this, the company has set up a bot to compare commit differences. If, one day after the release code has been merged into the <code>master</code> branch, the <code>stg</code> and <code>pre</code> branches have not been updated, the team receives a reminder.</p>
-<p>However, team members often forget to manually perform this merge operation, leading to frequent reminders and impacting work efficiency.</p>
+            <h2 id="背景">
+  背景
+</h2><p>面试的时候面试官问我知道 KOA 的洋葱模型是怎么实现的吗？
+一下把我问住了，我确实没有研究过是如何实现的。自己头脑风暴了一会也没猜到作者的思路。</p>
+<p>面试结束以后，赶紧研究了一下源码，看看框架作者是怎么写的。
+果然是大神！利用递归的特性轻轻松松几行代码就实现了。</p>
+<p>于是就写了这篇文章拆解一下作者的实现思路。</p>
+<h2 id="前置知识">
+  前置知识
+</h2><p>在看源码之前需要先了解一下这两个概念</p>
+<ul>
+<li>洋葱模型</li>
+<li>递归</li>
+</ul>
         </div>
     
 
@@ -380,12 +370,12 @@
 <div class="post-info noselect">
     
         <div class="post-date dt-published">
-            <time datetime="2024-05-18">2024-05-18</time>
+            <time datetime="2024-11-11">2024-11-11</time>
             
         </div>
     
 
-    <a class="post-hidden-url u-url" href="/posts/auto-merge/">/posts/auto-merge/</a>
+    <a class="post-hidden-url u-url" href="/zh/posts/koa-onion-model-explained/">/zh/posts/koa-onion-model-explained/</a>
     <a href="http://localhost:1313/" class="p-name p-author post-hidden-author h-card" rel="me">map[email:halfseteamedbun@gmail.com location:Mainland China name:Yiqi]</a>
 
 
@@ -395,10 +385,7 @@
             <ul class="post-tags">
                 
                     
-                    <li><a href="/tags/gitlab-ci/cd/">#GitLab CI/CD</a></li>
-                
-                    
-                    <li><a href="/tags/development-process-optimization/">#Development Process Optimization</a></li>
+                    <li><a href="/zh/tags/koa/">#KOA</a></li>
                 
             </ul>
         
@@ -422,14 +409,16 @@
     
     
     
+        
+    
 
     
         
-            <li>English</li>
+            <li><a href="/">English</a></li>
         
     
         
-            <li><a href="/zh/tags/development-process-optimization/">中文</a></li>
+            <li>中文</li>
         
     
 </ul>
