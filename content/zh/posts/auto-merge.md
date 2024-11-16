@@ -7,13 +7,13 @@ tags = ["GitLab CI/CD", "Development Process Optimization"]
 
 ## 背景
 
-公司的 git flow 表明，在发布代码合并到 `master` 分支后，`stg` 和 `pre` 分支也必须包含最新的 `master` 代码。
+公司的 git flow 要求，在发布代码合并到 `master` 分支后，`stg` 和 `pre` 分支也必须包含最新的 `master` 代码。
+
+<!--more-->
 
 为此，公司设置了一个机器人（bot）来比较 commit 差异。如果在发布代码合并到 `master` 分支一天后，`stg` 和 `pre` 分支仍未更新，团队收到提醒。
 
 然而，我所在的团队成员总是忘记手动执行这个合并操作，导致频繁的提醒，影响了工作效率。
-
-<!--more-->
 
 ## 解决方案
 

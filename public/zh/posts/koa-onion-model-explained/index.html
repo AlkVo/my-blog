@@ -15,17 +15,7 @@
 <meta name="description" content="
   背景
 面试的时候面试官问我知道 KOA 的洋葱模型是怎么实现的吗？
-一下把我问住了，我确实没有研究过是如何实现的。自己头脑风暴了一会也没猜到作者的思路。
-面试结束以后，赶紧研究了一下源码，看看框架作者是怎么写的。
-果然是大神！利用递归的特性轻轻松松几行代码就实现了。
-于是就写了这篇文章拆解一下作者的实现思路。
-
-  前置知识
-在看源码之前需要先了解一下这两个概念
-
-洋葱模型
-递归
-">
+一下把我问住了，我确实没有研究过是如何实现的。自己头脑风暴了一会也没猜到作者的思路。">
 
 
 
@@ -531,7 +521,7 @@
 </span></span><span style="display:flex;"><span>  <span style="color:#ff9f43">5</span> <span style="color:#ff6ac1">-</span> 结束
 </span></span></code></pre></div><h2 id="拆解">
   拆解
-</h2><p>理解了上米的两个概念，我们就可以来看看 KOA 的洋葱模型是怎么实现的了。</p>
+</h2><p>理解了上面的两个概念，我们就可以来看看 KOA 的洋葱模型是怎么实现的了。</p>
 <p><a href="https://github.com/koajs/compose/blob/master/index.js">先来看看源码</a></p>
 <div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-js" data-lang="js"><span style="display:flex;"><span><span style="color:#ff5c57">function</span> compose(middleware) {
 </span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">if</span> (<span style="color:#ff6ac1">!</span><span style="color:#ff5c57">Array</span>.isArray(middleware))

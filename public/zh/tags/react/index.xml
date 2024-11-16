@@ -19,10 +19,193 @@
     
 
     
-    <lastBuildDate>Thu, 11 Jan 2024 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Fri, 01 Nov 2024 00:00:00 +0000</lastBuildDate>
     
     <atom:link href="/zh/tags/react/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>深入源码解析：为什么 React Hook 必须按顺序使用</title>
+      <link>/zh/posts/why-react-hooks-must-be-used-in-order/</link>
+      <pubDate>Fri, 01 Nov 2024 00:00:00 +0000</pubDate>
+      <author>halfseteamedbun@gmail.com (Yiqi)</author>
+      <guid>/zh/posts/why-react-hooks-must-be-used-in-order/</guid>
+      <description>&lt;h2 id=&#34;背景&#34;&gt;
+  背景
+&lt;/h2&gt;&lt;p&gt;React 的官方文档中有一条规则：&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;不要在循环，条件或嵌套函数中调用 Hook， 确保总是在你的 React 函数的最顶层以及任何 return 之前调用他们。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;但是为什么呢？&lt;/p&gt;
+&lt;h2 id=&#34;让源码告诉你&#34;&gt;
+  让源码告诉你
+&lt;/h2&gt;&lt;h3 id=&#34;hook-是怎么存储的&#34;&gt;
+  Hook 是怎么存储的
+&lt;/h3&gt;&lt;p&gt;从 &lt;a href=&#34;https://github.com/facebook/react/blob/main/packages/react-reconciler/src/ReactFiberHooks.js#L268C1-L269C1&#34;&gt;源码中的描述中&lt;/a&gt; 我们可以知道，Hooks 是以链表的形式存储在 Fiber 的 &lt;code&gt;memoizedState&lt;/code&gt; 字段中。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;current Hook list 链表是属于 current fiber 的。&lt;/li&gt;
+&lt;li&gt;workInProgress Hook list 是属于 workInProgress fiber 的。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;a href=&#34;https://github.com/facebook/react/blob/main/packages/react-reconciler/src/ReactFiberHooks.js#L197&#34;&gt;Hook 的存储结构&lt;/a&gt;是一个链表，每个 Hook 都有一个 next 指针指向下一个 Hook。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-ts&#34; data-lang=&#34;ts&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff6ac1&#34;&gt;export&lt;/span&gt; &lt;span style=&#34;color:#ff6ac1&#34;&gt;type&lt;/span&gt; Hook &lt;span style=&#34;color:#ff6ac1&#34;&gt;=&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  memoizedState: &lt;span style=&#34;color:#9aedfe&#34;&gt;any&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  baseState: &lt;span style=&#34;color:#9aedfe&#34;&gt;any&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  baseQueue: &lt;span style=&#34;color:#9aedfe&#34;&gt;Update&lt;/span&gt;&amp;lt;&lt;span style=&#34;color:#ff6ac1&#34;&gt;any&lt;/span&gt;&lt;span style=&#34;color:#ff5c57&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color:#57c7ff&#34;&gt;any&lt;/span&gt;&amp;gt; &lt;span style=&#34;color:#ff6ac1&#34;&gt;|&lt;/span&gt; &lt;span style=&#34;color:#ff6ac1&#34;&gt;null&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  queue: &lt;span style=&#34;color:#9aedfe&#34;&gt;any&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  next: &lt;span style=&#34;color:#9aedfe&#34;&gt;Hook&lt;/span&gt; &lt;span style=&#34;color:#ff6ac1&#34;&gt;|&lt;/span&gt; &lt;span style=&#34;color:#ff6ac1&#34;&gt;null&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;};
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;大概长这样：&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;┌────────────────────┐     ┌────────────────────┐     ┌────────────────────┐
+│ Hook 1             │     │ Hook 2             │     │ Hook 3             │
+│                    │     │                    │     │                    │
+│ memoizedState: any │     │ memoizedState: any │     │ memoizedState: any │
+│ baseState: any     │     │ baseState: any     │     │ baseState: any     │
+│ baseQueue: Update  │     │ baseQueue: Update  │     │ baseQueue: Update  │
+│ queue: any         │     │ queue: any         │     │ queue: any         │
+│ next: Hook  ───────┼────&amp;gt;│ next: Hook  ───────┼────&amp;gt;│ next: Hook  ───────&amp;gt; null
+└────────────────────┘     └────────────────────┘     └────────────────────┘
+&lt;/code&gt;&lt;/pre&gt;&lt;h3 id=&#34;初次渲染&#34;&gt;
+  初次渲染
+&lt;/h3&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-ts&#34; data-lang=&#34;ts&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff5c57&#34;&gt;function&lt;/span&gt; mountWorkInProgressHook()&lt;span style=&#34;color:#ff6ac1&#34;&gt;:&lt;/span&gt; Hook {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff6ac1&#34;&gt;const&lt;/span&gt; hook: &lt;span style=&#34;color:#9aedfe&#34;&gt;Hook&lt;/span&gt; &lt;span style=&#34;color:#ff6ac1&#34;&gt;=&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    memoizedState: &lt;span style=&#34;color:#9aedfe&#34;&gt;null&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    baseState: &lt;span style=&#34;color:#9aedfe&#34;&gt;null&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    baseQueue: &lt;span style=&#34;color:#9aedfe&#34;&gt;null&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    queue: &lt;span style=&#34;color:#9aedfe&#34;&gt;null&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    next: &lt;span style=&#34;color:#9aedfe&#34;&gt;null&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  };
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff6ac1&#34;&gt;if&lt;/span&gt; (workInProgressHook &lt;span style=&#34;color:#ff6ac1&#34;&gt;===&lt;/span&gt; &lt;span style=&#34;color:#ff6ac1&#34;&gt;null&lt;/span&gt;) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#78787e&#34;&gt;// This is the first hook in the list
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#78787e&#34;&gt;&lt;/span&gt;    currentlyRenderingFiber.memoizedState &lt;span style=&#34;color:#ff6ac1&#34;&gt;=&lt;/span&gt; workInProgressHook &lt;span style=&#34;color:#ff6ac1&#34;&gt;=&lt;/span&gt; hook;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  } &lt;span style=&#34;color:#ff6ac1&#34;&gt;else&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#78787e&#34;&gt;// Append to the end of the list
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#78787e&#34;&gt;&lt;/span&gt;    workInProgressHook &lt;span style=&#34;color:#ff6ac1&#34;&gt;=&lt;/span&gt; workInProgressHook.next &lt;span style=&#34;color:#ff6ac1&#34;&gt;=&lt;/span&gt; hook;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff6ac1&#34;&gt;return&lt;/span&gt; workInProgressHook;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;在初次渲染的时候，React 会调用 &lt;code&gt;mountWorkInProgressHook&lt;/code&gt; 函数构建 Hooks 链表。
+放入 &lt;code&gt;currentlyRenderingFiber.memoizedState&lt;/code&gt; 中。&lt;/p&gt;
+&lt;h3 id=&#34;更新&#34;&gt;
+  更新
+&lt;/h3&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-ts&#34; data-lang=&#34;ts&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff5c57&#34;&gt;function&lt;/span&gt; updateWorkInProgressHook()&lt;span style=&#34;color:#ff6ac1&#34;&gt;:&lt;/span&gt; Hook {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#78787e&#34;&gt;// This function is used both for updates and for re-renders triggered by a
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#78787e&#34;&gt;&lt;/span&gt;  &lt;span style=&#34;color:#78787e&#34;&gt;// render phase update. It assumes there is either a current hook we can
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#78787e&#34;&gt;&lt;/span&gt;  &lt;span style=&#34;color:#78787e&#34;&gt;// clone, or a work-in-progress hook from a previous render pass that we can
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#78787e&#34;&gt;&lt;/span&gt;  &lt;span style=&#34;color:#78787e&#34;&gt;// use as a base.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#78787e&#34;&gt;&lt;/span&gt;  &lt;span style=&#34;color:#ff5c57&#34;&gt;let&lt;/span&gt; nextCurrentHook: &lt;span style=&#34;color:#9aedfe&#34;&gt;null&lt;/span&gt; &lt;span style=&#34;color:#ff6ac1&#34;&gt;|&lt;/span&gt; Hook;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff6ac1&#34;&gt;if&lt;/span&gt; (currentHook &lt;span style=&#34;color:#ff6ac1&#34;&gt;===&lt;/span&gt; &lt;span style=&#34;color:#ff6ac1&#34;&gt;null&lt;/span&gt;) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff6ac1&#34;&gt;const&lt;/span&gt; current &lt;span style=&#34;color:#ff6ac1&#34;&gt;=&lt;/span&gt; currentlyRenderingFiber.alternate;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff6ac1&#34;&gt;if&lt;/span&gt; (current &lt;span style=&#34;color:#ff6ac1&#34;&gt;!==&lt;/span&gt; &lt;span style=&#34;color:#ff6ac1&#34;&gt;null&lt;/span&gt;) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      nextCurrentHook &lt;span style=&#34;color:#ff6ac1&#34;&gt;=&lt;/span&gt; current.memoizedState;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    } &lt;span style=&#34;color:#ff6ac1&#34;&gt;else&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      nextCurrentHook &lt;span style=&#34;color:#ff6ac1&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#ff6ac1&#34;&gt;null&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  } &lt;span style=&#34;color:#ff6ac1&#34;&gt;else&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    nextCurrentHook &lt;span style=&#34;color:#ff6ac1&#34;&gt;=&lt;/span&gt; currentHook.next;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff5c57&#34;&gt;let&lt;/span&gt; nextWorkInProgressHook: &lt;span style=&#34;color:#9aedfe&#34;&gt;null&lt;/span&gt; &lt;span style=&#34;color:#ff6ac1&#34;&gt;|&lt;/span&gt; Hook;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff6ac1&#34;&gt;if&lt;/span&gt; (workInProgressHook &lt;span style=&#34;color:#ff6ac1&#34;&gt;===&lt;/span&gt; &lt;span style=&#34;color:#ff6ac1&#34;&gt;null&lt;/span&gt;) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    nextWorkInProgressHook &lt;span style=&#34;color:#ff6ac1&#34;&gt;=&lt;/span&gt; currentlyRenderingFiber.memoizedState;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  } &lt;span style=&#34;color:#ff6ac1&#34;&gt;else&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    nextWorkInProgressHook &lt;span style=&#34;color:#ff6ac1&#34;&gt;=&lt;/span&gt; workInProgressHook.next;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff6ac1&#34;&gt;if&lt;/span&gt; (nextWorkInProgressHook &lt;span style=&#34;color:#ff6ac1&#34;&gt;!==&lt;/span&gt; &lt;span style=&#34;color:#ff6ac1&#34;&gt;null&lt;/span&gt;) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#78787e&#34;&gt;// There&amp;#39;s already a work-in-progress. Reuse it.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#78787e&#34;&gt;&lt;/span&gt;    workInProgressHook &lt;span style=&#34;color:#ff6ac1&#34;&gt;=&lt;/span&gt; nextWorkInProgressHook;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    nextWorkInProgressHook &lt;span style=&#34;color:#ff6ac1&#34;&gt;=&lt;/span&gt; workInProgressHook.next;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    currentHook &lt;span style=&#34;color:#ff6ac1&#34;&gt;=&lt;/span&gt; nextCurrentHook;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  } &lt;span style=&#34;color:#ff6ac1&#34;&gt;else&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#78787e&#34;&gt;// Clone from the current hook.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#78787e&#34;&gt;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff6ac1&#34;&gt;if&lt;/span&gt; (nextCurrentHook &lt;span style=&#34;color:#ff6ac1&#34;&gt;===&lt;/span&gt; &lt;span style=&#34;color:#ff6ac1&#34;&gt;null&lt;/span&gt;) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      &lt;span style=&#34;color:#ff6ac1&#34;&gt;const&lt;/span&gt; currentFiber &lt;span style=&#34;color:#ff6ac1&#34;&gt;=&lt;/span&gt; currentlyRenderingFiber.alternate;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      &lt;span style=&#34;color:#ff6ac1&#34;&gt;if&lt;/span&gt; (currentFiber &lt;span style=&#34;color:#ff6ac1&#34;&gt;===&lt;/span&gt; &lt;span style=&#34;color:#ff6ac1&#34;&gt;null&lt;/span&gt;) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#78787e&#34;&gt;// This is the initial render. This branch is reached when the component
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#78787e&#34;&gt;&lt;/span&gt;        &lt;span style=&#34;color:#78787e&#34;&gt;// suspends, resumes, then renders an additional hook.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#78787e&#34;&gt;&lt;/span&gt;        &lt;span style=&#34;color:#78787e&#34;&gt;// Should never be reached because we should switch to the mount dispatcher first.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#78787e&#34;&gt;&lt;/span&gt;        &lt;span style=&#34;color:#ff6ac1&#34;&gt;throw&lt;/span&gt; &lt;span style=&#34;color:#ff6ac1&#34;&gt;new&lt;/span&gt; &lt;span style=&#34;color:#ff5c57&#34;&gt;Error&lt;/span&gt;(
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;          &lt;span style=&#34;color:#5af78e&#34;&gt;&amp;#34;Update hook called on initial render. This is likely a bug in React. Please file an issue.&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        );
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      } &lt;span style=&#34;color:#ff6ac1&#34;&gt;else&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#78787e&#34;&gt;// This is an update. We should always have a current hook.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#78787e&#34;&gt;&lt;/span&gt;        &lt;span style=&#34;color:#ff6ac1&#34;&gt;throw&lt;/span&gt; &lt;span style=&#34;color:#ff6ac1&#34;&gt;new&lt;/span&gt; &lt;span style=&#34;color:#ff5c57&#34;&gt;Error&lt;/span&gt;(&lt;span style=&#34;color:#5af78e&#34;&gt;&amp;#34;Rendered more hooks than during the previous render.&amp;#34;&lt;/span&gt;);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    currentHook &lt;span style=&#34;color:#ff6ac1&#34;&gt;=&lt;/span&gt; nextCurrentHook;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff6ac1&#34;&gt;const&lt;/span&gt; newHook: &lt;span style=&#34;color:#9aedfe&#34;&gt;Hook&lt;/span&gt; &lt;span style=&#34;color:#ff6ac1&#34;&gt;=&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      memoizedState: &lt;span style=&#34;color:#9aedfe&#34;&gt;currentHook.memoizedState&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      baseState: &lt;span style=&#34;color:#9aedfe&#34;&gt;currentHook.baseState&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      baseQueue: &lt;span style=&#34;color:#9aedfe&#34;&gt;currentHook.baseQueue&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      queue: &lt;span style=&#34;color:#9aedfe&#34;&gt;currentHook.queue&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      next: &lt;span style=&#34;color:#9aedfe&#34;&gt;null&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    };
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff6ac1&#34;&gt;if&lt;/span&gt; (workInProgressHook &lt;span style=&#34;color:#ff6ac1&#34;&gt;===&lt;/span&gt; &lt;span style=&#34;color:#ff6ac1&#34;&gt;null&lt;/span&gt;) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      &lt;span style=&#34;color:#78787e&#34;&gt;// This is the first hook in the list.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#78787e&#34;&gt;&lt;/span&gt;      currentlyRenderingFiber.memoizedState &lt;span style=&#34;color:#ff6ac1&#34;&gt;=&lt;/span&gt; workInProgressHook &lt;span style=&#34;color:#ff6ac1&#34;&gt;=&lt;/span&gt; newHook;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    } &lt;span style=&#34;color:#ff6ac1&#34;&gt;else&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      &lt;span style=&#34;color:#78787e&#34;&gt;// Append to the end of the list.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#78787e&#34;&gt;&lt;/span&gt;      workInProgressHook &lt;span style=&#34;color:#ff6ac1&#34;&gt;=&lt;/span&gt; workInProgressHook.next &lt;span style=&#34;color:#ff6ac1&#34;&gt;=&lt;/span&gt; newHook;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff6ac1&#34;&gt;return&lt;/span&gt; workInProgressHook;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;在组件触发更新的时候，React 会调用 &lt;code&gt;updateWorkInProgressHook&lt;/code&gt; 函数来更新 Hooks 链表。
+阅读代码后不难发现：&lt;/p&gt;
+&lt;p&gt;React 会从 &lt;code&gt;currentHook&lt;/code&gt; 的节点中获取数据，然后将数据更新到 &lt;code&gt;workInProgressHook&lt;/code&gt; 的节点中。&lt;/p&gt;
+&lt;h3 id=&#34;为什么要按顺序使用-hook&#34;&gt;
+  为什么要按顺序使用 Hook
+&lt;/h3&gt;&lt;p&gt;所以不难推导出，如果我们在循环、条件或嵌套函数中调用 Hook，那么在更新的时候，React 就无法正确的找到对应的 Hook 节点，导致数据错乱。&lt;/p&gt;
+&lt;p&gt;假设我们有这样一个组件：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-jsx&#34; data-lang=&#34;jsx&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff6ac1&#34;&gt;const&lt;/span&gt; firstRender &lt;span style=&#34;color:#ff6ac1&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#ff6ac1&#34;&gt;true&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff5c57&#34;&gt;function&lt;/span&gt; MyComponent() {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff6ac1&#34;&gt;const&lt;/span&gt; [count, setCount] &lt;span style=&#34;color:#ff6ac1&#34;&gt;=&lt;/span&gt; useState(&lt;span style=&#34;color:#ff9f43&#34;&gt;0&lt;/span&gt;);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff6ac1&#34;&gt;if&lt;/span&gt; (firstRender) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff6ac1&#34;&gt;const&lt;/span&gt; [name, setName] &lt;span style=&#34;color:#ff6ac1&#34;&gt;=&lt;/span&gt; useState(&lt;span style=&#34;color:#5af78e&#34;&gt;&amp;#34;Alice&amp;#34;&lt;/span&gt;);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff6ac1&#34;&gt;const&lt;/span&gt; [age, setAge] &lt;span style=&#34;color:#ff6ac1&#34;&gt;=&lt;/span&gt; useState(&lt;span style=&#34;color:#ff9f43&#34;&gt;18&lt;/span&gt;);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  firstRender &lt;span style=&#34;color:#ff6ac1&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#ff6ac1&#34;&gt;false&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  ...
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol&gt;
+&lt;li&gt;在初次渲染的时候，hooks 链表是这样的：&lt;/li&gt;
+&lt;/ol&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;┌──────────────────────────┐           ┌──────────────────────────┐           ┌──────────────────────────┐
+│ count                    │           │ name                     │           │ age                      │
+│                          │           │                          │           │                          │
+│ memoizedState: 0         │           │ memoizedState: &amp;#34;Alice&amp;#34;   │           │ memoizedState: 18        │
+│ baseState: 0             │           │ baseState: &amp;#34;Alice&amp;#34;       │           │ baseState: 18            │
+│ baseQueue: null          │           │ baseQueue: null          │           │ baseQueue: null          │
+│ queue: null              │           │ queue: null              │           │ queue: null              │
+│ next: Hook ──────────────┼──────────&amp;gt;│ next: Hook ──────────────┼──────────&amp;gt;│ next: Hook ─────────────&amp;gt; null
+└──────────────────────────┘           └──────────────────────────┘           └──────────────────────────┘
+&lt;/code&gt;&lt;/pre&gt;&lt;ol start=&#34;2&#34;&gt;
+&lt;li&gt;在第二次渲染的时候，hook name 消失了，根据链表的特性，hook age 的数据是从 current.count.next 中获取的，所以这次渲染的 age 的数据就变成了 name 的数据。导致数据错乱。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;┌──────────────────────────┐           ┌──────────────────────────┐
+│ count                    │           │ age                      │
+│                          │           │                          │
+│ memoizedState: 0         │           │ memoizedState: &amp;#34;Alice&amp;#34;   │
+│ baseState: 0             │           │ baseState: &amp;#34;Alice&amp;#34;       │
+│ baseQueue: null          │           │ baseQueue: null          │
+│ queue: null              │           │ queue: null              │
+│ next: Hook ──────────────┼──────────&amp;gt;│ next: Hook ──────────────┼──────────&amp;gt;null
+└──────────────────────────┘           └──────────────────────────┘
+&lt;/code&gt;&lt;/pre&gt;&lt;h2 id=&#34;总结&#34;&gt;
+  总结
+&lt;/h2&gt;&lt;p&gt;所以，如果我们在循环、条件或嵌套函数中调用 Hook，那么在更新的时候，React 就有可能无法正确的找到对应的 Hook 节点，导致数据错乱。这也是为什么 React 的官方文档中有这样一条规则。&lt;/p&gt;</description>
+    </item>
     
     <item>
       <title>从 Props Hell 到 Compound Pattern：该如何设计公共的 React 组件库</title>

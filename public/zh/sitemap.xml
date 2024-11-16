@@ -47,6 +47,25 @@
         <loc>http://localhost:1313/zh/posts/koa-onion-model-explained/</loc>
         <lastmod>2024-11-11T00:00:00+00:00</lastmod>
       </url><url>
+        <loc>http://localhost:1313/zh/tags/hook/</loc>
+        <lastmod>2024-11-01T00:00:00+00:00</lastmod>
+      </url><url>
+        <loc>http://localhost:1313/zh/tags/react/</loc>
+        <lastmod>2024-11-01T00:00:00+00:00</lastmod>
+        <xhtml:link
+          rel="alternate"
+          hreflang="en"
+          href="http://localhost:1313/tags/react/"
+        />
+        <xhtml:link
+          rel="alternate"
+          hreflang="zh"
+          href="http://localhost:1313/zh/tags/react/"
+        />
+      </url><url>
+        <loc>http://localhost:1313/zh/posts/why-react-hooks-must-be-used-in-order/</loc>
+        <lastmod>2024-11-01T00:00:00+00:00</lastmod>
+      </url><url>
         <loc>http://localhost:1313/zh/tags/development-process-optimization/</loc>
         <lastmod>2024-05-18T00:00:00+00:00</lastmod>
         <xhtml:link
@@ -136,19 +155,6 @@
           rel="alternate"
           hreflang="zh"
           href="http://localhost:1313/zh/tags/patterns/"
-        />
-      </url><url>
-        <loc>http://localhost:1313/zh/tags/react/</loc>
-        <lastmod>2024-01-11T00:00:00+00:00</lastmod>
-        <xhtml:link
-          rel="alternate"
-          hreflang="en"
-          href="http://localhost:1313/tags/react/"
-        />
-        <xhtml:link
-          rel="alternate"
-          hreflang="zh"
-          href="http://localhost:1313/zh/tags/react/"
         />
       </url><url>
         <loc>http://localhost:1313/zh/posts/react-shared-components-compound-pattern-journey/</loc>
