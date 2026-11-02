@@ -30,14 +30,7 @@
       <pubDate>Mon, 11 Nov 2024 00:00:00 +0000</pubDate>
       <author>halfseteamedbun@gmail.com (Yiqi)</author>
       <guid>/zh/posts/koa-onion-model-explained/</guid>
-      <description>&lt;h2 id=&#34;背景&#34;&gt;
-  背景
-&lt;/h2&gt;&lt;p&gt;面试的时候面试官问我知道 KOA 的洋葱模型是怎么实现的吗？
-一下把我问住了，我确实没有研究过是如何实现的。自己头脑风暴了一会也没猜到作者的思路。&lt;/p&gt;
-&lt;p&gt;面试结束以后，赶紧研究了一下源码，看看框架作者是怎么写的。
-果然是大神！利用递归的特性轻轻松松几行代码就实现了。&lt;/p&gt;
-&lt;p&gt;于是就写了这篇文章拆解一下作者的实现思路。&lt;/p&gt;
-&lt;h2 id=&#34;前置知识&#34;&gt;
+      <description>&lt;h2 id=&#34;前置知识&#34;&gt;
   前置知识
 &lt;/h2&gt;&lt;p&gt;在看源码之前需要先了解一下这两个概念&lt;/p&gt;
 &lt;ul&gt;
@@ -302,7 +295,8 @@
 &lt;h2 id=&#34;总结&#34;&gt;
   总结
 &lt;/h2&gt;&lt;p&gt;可以看到，大神通过递归的特性，一层一层的调用，再一层一层地返回，轻松实现了 KOA 的洋葱模型。&lt;/p&gt;
-&lt;p&gt;太妙了!&lt;/p&gt;</description>
+&lt;p&gt;太妙了!&lt;/p&gt;
+</description>
     </item>
     
   </channel>
