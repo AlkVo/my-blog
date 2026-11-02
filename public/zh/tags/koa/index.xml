@@ -295,8 +295,7 @@
 &lt;h2 id=&#34;总结&#34;&gt;
   总结
 &lt;/h2&gt;&lt;p&gt;可以看到，大神通过递归的特性，一层一层的调用，再一层一层地返回，轻松实现了 KOA 的洋葱模型。&lt;/p&gt;
-&lt;p&gt;太妙了!&lt;/p&gt;
-</description>
+&lt;p&gt;太妙了!&lt;/p&gt;</description>
     </item>
     
   </channel>

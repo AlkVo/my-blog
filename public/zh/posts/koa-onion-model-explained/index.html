@@ -14,53 +14,7 @@
 
 <meta name="description" content="
   前置知识
-在看源码之前需要先了解一下这两个概念
-
-洋葱模型
-递归
-
-
-  什么是洋葱模型
-洋葱模型是 Koa 框架的核心思想之一，用于描述中间件的执行顺序。
-中间件的执行顺序类似于洋葱的层次结构，从外到内，再从内到外。
-每个中间件可以在请求处理的不同阶段执行代码。
-const Koa = require(&#34;koa&#34;);
-const app = new Koa();
-
-app.use(async (ctx, next) =&gt; {
-  console.log(&#34;中间件1 - 开始&#34;);
-  await next();
-  console.log(&#34;中间件1 - 结束&#34;);
-});
-
-app.use(async (ctx, next) =&gt; {
-  console.log(&#34;中间件2 - 开始&#34;);
-  await next();
-  console.log(&#34;中间件2 - 结束&#34;);
-});
-
-app.use(async (ctx, next) =&gt; {
-  console.log(&#34;中间件3 - 开始&#34;);
-  ctx.body = &#34;Hello Koa&#34;;
-  console.log(&#34;中间件3 - 结束&#34;);
-});
-
-app.listen(3000, () =&gt; {
-  console.log(&#34;服务器启动在 http://localhost:3000&#34;);
-});
-
-//执行结果
-当请求到达服务器时，执行顺序如下：
-
-中间件1 - 开始
-中间件2 - 开始
-中间件3 - 开始
-中间件3 - 结束
-中间件2 - 结束
-中间件1 - 结束
-
-  什么是递归呢？
-递归是一种在函数定义中使用函数自身的方法。">
+在看源码之前需要先了解一下这两个概念">
 
 
 
@@ -714,7 +668,6 @@ app.listen(3000, () =&gt; {
   总结
 </h2><p>可以看到，大神通过递归的特性，一层一层的调用，再一层一层地返回，轻松实现了 KOA 的洋葱模型。</p>
 <p>太妙了!</p>
-
         </div>
 
     </article>

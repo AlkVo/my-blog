@@ -445,52 +445,6 @@
             <h2 id="前置知识">
   前置知识
 </h2><p>在看源码之前需要先了解一下这两个概念</p>
-<ul>
-<li>洋葱模型</li>
-<li>递归</li>
-</ul>
-<h3 id="什么是洋葱模型">
-  什么是洋葱模型
-</h3><p>洋葱模型是 Koa 框架的核心思想之一，用于描述中间件的执行顺序。</p>
-<p>中间件的执行顺序类似于洋葱的层次结构，从外到内，再从内到外。</p>
-<p>每个中间件可以在请求处理的不同阶段执行代码。</p>
-<div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-js" data-lang="js"><span style="display:flex;"><span><span style="color:#ff6ac1">const</span> Koa <span style="color:#ff6ac1">=</span> require(<span style="color:#5af78e">&#34;koa&#34;</span>);
-</span></span><span style="display:flex;"><span><span style="color:#ff6ac1">const</span> app <span style="color:#ff6ac1">=</span> <span style="color:#ff6ac1">new</span> Koa();
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>app.use(<span style="color:#ff6ac1">async</span> (ctx, next) =&gt; {
-</span></span><span style="display:flex;"><span>  console.log(<span style="color:#5af78e">&#34;中间件1 - 开始&#34;</span>);
-</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">await</span> next();
-</span></span><span style="display:flex;"><span>  console.log(<span style="color:#5af78e">&#34;中间件1 - 结束&#34;</span>);
-</span></span><span style="display:flex;"><span>});
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>app.use(<span style="color:#ff6ac1">async</span> (ctx, next) =&gt; {
-</span></span><span style="display:flex;"><span>  console.log(<span style="color:#5af78e">&#34;中间件2 - 开始&#34;</span>);
-</span></span><span style="display:flex;"><span>  <span style="color:#ff6ac1">await</span> next();
-</span></span><span style="display:flex;"><span>  console.log(<span style="color:#5af78e">&#34;中间件2 - 结束&#34;</span>);
-</span></span><span style="display:flex;"><span>});
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>app.use(<span style="color:#ff6ac1">async</span> (ctx, next) =&gt; {
-</span></span><span style="display:flex;"><span>  console.log(<span style="color:#5af78e">&#34;中间件3 - 开始&#34;</span>);
-</span></span><span style="display:flex;"><span>  ctx.body <span style="color:#ff6ac1">=</span> <span style="color:#5af78e">&#34;Hello Koa&#34;</span>;
-</span></span><span style="display:flex;"><span>  console.log(<span style="color:#5af78e">&#34;中间件3 - 结束&#34;</span>);
-</span></span><span style="display:flex;"><span>});
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>app.listen(<span style="color:#ff9f43">3000</span>, () =&gt; {
-</span></span><span style="display:flex;"><span>  console.log(<span style="color:#5af78e">&#34;服务器启动在 http://localhost:3000&#34;</span>);
-</span></span><span style="display:flex;"><span>});
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#78787e">//执行结果
-</span></span></span><span style="display:flex;"><span><span style="color:#78787e"></span>当请求到达服务器时<span style="color:#ff5c57">，</span>执行顺序如下<span style="color:#ff5c57">：</span>
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>中间件1 <span style="color:#ff6ac1">-</span> 开始
-</span></span><span style="display:flex;"><span>中间件2 <span style="color:#ff6ac1">-</span> 开始
-</span></span><span style="display:flex;"><span>中间件3 <span style="color:#ff6ac1">-</span> 开始
-</span></span><span style="display:flex;"><span>中间件3 <span style="color:#ff6ac1">-</span> 结束
-</span></span><span style="display:flex;"><span>中间件2 <span style="color:#ff6ac1">-</span> 结束
-</span></span><span style="display:flex;"><span>中间件1 <span style="color:#ff6ac1">-</span> 结束
-</span></span></code></pre></div><h3 id="什么是递归呢">
-  什么是递归呢？
-</h3><p>递归是一种在函数定义中使用函数自身的方法。</p>
         </div>
     
 
